@@ -1,0 +1,462 @@
+openapi: 3.0.3
+info:
+  title: GoodEats
+  description: |-
+    API documentation for our website 'goodeats.com'
+  version: 1.0.0
+servers:
+  - url: https://goodeats.com
+tags:
+  - name: user
+    description: Operations about user
+  - name: recipe
+    description: Everything about recipes
+  - name: collections
+    description: Access to your collections
+  - name: reviews
+    description: A review related to a particular recipe
+paths:
+
+  /signup:
+    post:
+      tags:
+        - user
+      summary: Create user
+      description: Creates a new user and adds it to the database
+      operationId: createUser
+      requestBody:
+        description: Created user object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '201':
+          description: User created successfully
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+  /{username}:
+    parameters:
+      - name: username
+        in: path
+        description: 'The username of the user to be fetched.'
+        required: true
+        schema:
+          type: string
+    get:
+      tags:
+        - user
+      summary: Get user by name
+      description: Displays the profile of the user searched
+      operationId: getUserByName
+      responses:
+        '200':
+          description: Successful retrieval operation
+          content:
+            application/json:
+              schema:
+               $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid username supplied
+        '404':
+          description: User not found
+    put:
+      tags:
+        - user
+      summary: Update user
+      description: This can only be done by the logged in user.
+      operationId: updateUser
+      requestBody:
+        description: Update an existent user in the store
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        '204':
+          description: User updated successfully
+          content:
+            application/json:
+              schema:
+               $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid username supplied
+        '404':
+          description: User not found
+  /recipe/{recipeid}:
+    parameters:
+      - name: recipeid
+        in: path
+        description: 'The id of the recipe to be fetched.'
+        required: true
+        schema:
+          type: integer
+    get:
+      tags:
+        - recipe
+      summary: Find recipe by id
+      description: Retrieves the full recipe with a unique id
+      operationId: getRecipeById
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Recipe'          
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Recipe not found
+    put:
+      tags:
+        - recipe
+      summary: Updates a pre-existing recipe
+      operationId: updateRecipe
+      description: This can only be done by the recipe's author
+      security:
+        - user_authorization: []
+      requestBody:
+        description: Update recipe
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Recipe'
+      responses:
+        '204':
+          description: Recipe updated successfully
+          content:
+            application/json:
+              schema:
+               $ref: '#/components/schemas/Recipe'
+        '400':
+          description: Invalid recipe id supplied
+        '404':
+          description: Recipe not found
+  /recipe/post:
+    post:
+      tags:
+        - recipe
+      summary: Adds a new recipe in the databse
+      description: ''
+      operationId: postRecipe
+      requestBody:
+        description: Add a new recipe
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Recipe'
+      responses:
+        '201':
+          description: Recipe created successfully
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+  /{username}/collections/new:
+    parameters:
+      - name: username
+        in: path
+        description: 'The username of the user to be fetched.'
+        required: true
+        schema:
+          type: string
+    post:
+      tags:
+        - collections
+      summary: Create a new collection
+      description: Creates a new collection and adds it to the database
+      operationId: createCollection
+      requestBody:
+        description: Created collection object
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Collection'
+      responses:
+        '201':
+          description: Collection created successfully
+        '400':
+          description: Bad request
+        '500':
+          description: Internal server error
+  /{username}/collections/{collectionid}:
+    parameters:
+      - name: username
+        in: path
+        description: 'The username of the user to be fetched.'
+        required: true
+        schema:
+          type: string
+      - name: collectionid
+        in: path
+        description: 'The collection id unique to a particular user'
+        required: true
+        schema:
+          type: integer
+    get:
+      tags:
+        - collections
+      summary: Find collections by id
+      description: Retrieves the full collection with a id unique to each user
+      operationId: getCollectionById
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Collection'          
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Pet not found
+    put:
+      tags:
+        - collections
+      summary: Updates a pre-existing collection
+      description: This can only be done by the collection's author
+      security:
+        - user_authorization: []
+      requestBody:
+        description: Update collection
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Collection'
+      responses:
+        '204':
+          description: Collection updated successfully
+          content:
+            application/json:
+              schema:
+               $ref: '#/components/schemas/Collection'
+        '400':
+          description: Invalid collection id supplied
+        '404':
+          description: Collection not found
+  /recipe/{recipeid}/review:
+    parameters:
+      - name: recipeid
+        in: path
+        description: ID of recipe for which review is written
+        required: true
+        schema:
+          type: integer
+          format: int64
+    
+    post:
+      tags:
+        - reviews
+      summary: Post a review
+      description: ''
+      operationId: postReview
+      requestBody:
+        description: Posted review
+        content:
+          application/json:
+            schema: 
+              $ref: '#/components/schemas/Reviews'
+      responses:
+        '201':
+          description: Review created successfully
+        '400':
+          description: Bad request, missing or invalid parameters
+        '500':
+          description: Internal server error
+  /recipe/{recipeid}/review/{reviewid}:
+    parameters:
+          - name: reviewid
+            in: path
+            required: true
+            description: The ID of the review to update
+            schema:
+              type: integer
+              format: int64
+          - name: recipeid
+            in: path
+            description: ID of recipe for which review is written
+            required: true
+            schema:
+              type: integer
+              format: int64
+    put:
+      summary: Update an existing review
+      description: This can only be done by the author of the review
+      tags:
+        - reviews
+      security:
+        - user_authorization: []
+      
+      operationId: updateReview
+      requestBody:
+        content:
+          application/json:
+            schema: 
+              $ref: '#/components/schemas/Reviews'
+      responses:
+        '204':
+          description: Review updated successfully
+        '400':
+          description: Bad request, missing or invalid parameters
+        '404':
+          description: Review not found
+        '500':
+          description: Internal server error
+    get:
+      tags:
+        - reviews
+      summary: Find reviews by id
+      description: Retrieves the full reviews with a unique id
+      operationId: getReviewsById
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reviews'          
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Review not found
+    
+  
+components:
+  schemas:
+    NutritionFacts:
+      type: object
+      properties:
+        Calories:
+          type: integer
+          format: int64
+        Carbohydrates:
+          type: integer
+          format: int64
+        SaturatedFats:
+          type: integer
+          format: int64
+        Cholestrol:
+          type: integer
+          format: int64
+        Fat:
+          type: integer
+          format: int64
+        Protein:
+          type: integer
+          format: int64
+        Fibers:
+          type: integer
+          format: int64
+        Sugar:
+          type: integer
+          format: int64
+        Sodium:
+          type: integer
+          format: int64
+    Recipe:
+      type: object
+      required:
+        - recipeid
+        - name
+        - ingredients
+        - instructions
+        - username
+      properties:
+        recipeid:
+          type: integer
+          format: int64
+          example: 123
+        name: 
+          type: string
+        rating:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 5
+        image:
+          type: string
+          format: binary
+        description:
+          type: string
+        datepublished:
+          type: string
+          format: date
+        time:
+          type: string
+          format: time
+        username:
+          type: string
+        reviewcount:
+          type: integer
+          format: int64
+        keywords:
+          type: array
+          items: 
+            type: string
+        NutritionFacts:
+          $ref: '#/components/schemas/NutritionFacts'
+    User:
+      type: object
+      properties:
+        username:
+          type: string
+          example: example314
+        emailId:
+          type: string
+          format: email
+          example: example227@gmail.com
+        password:
+          type: string
+          format: password
+          example: '123pass456'
+    Collection:
+      type: object
+      properties:
+        collectionName:
+          type: string
+          example: My Favourite
+        username:
+          type: string
+          example: example314
+        recipeList:
+          type: array
+          items:
+            $ref: '#/components/schemas/Recipe'
+    Reviews:
+      type: object
+      required:
+        - reviewid
+        - recipeid
+        - username
+        - rating
+      properties:
+        reviewid:
+          type: integer
+          format: int64
+          example: 123
+        recipeid:
+          type: integer
+          format: int64
+          example: 123
+        username:
+          type: integer
+          format: int64
+          example: 123
+        rating:
+          type: integer
+          format: int32
+          minimum: 1
+          maximum: 5
+        reviewtext:
+          type: string
+        reviewlikes:
+          type: integer
+  securitySchemes:
+    user_authorization:
+      type: apiKey
+      name: Authorization
+      in: header
+      description: Use bearer token obtained from authentication server
