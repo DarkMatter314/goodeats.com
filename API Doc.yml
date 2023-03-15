@@ -416,9 +416,12 @@ components:
         datepublished:
           type: string
           format: date
-        time:
+        cooktime:
           type: string
           format: time
+        preptime:
+          type: string
+          format: date
         username:
           type: string
         reviewcount:
