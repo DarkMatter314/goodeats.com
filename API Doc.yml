@@ -68,6 +68,8 @@ paths:
       summary: Update user
       description: This can only be done by the logged in user.
       operationId: updateUser
+      security:
+        - user_authorization: []
       requestBody:
         description: Update an existent user in the store
         content:
@@ -88,7 +90,7 @@ paths:
     delete:
       tags:
         - user
-      summary: Option for user to delete their accountt
+      summary: Option for user to delete their account
       security:
         - user_authorization: []
       operationId: deleteUser
@@ -254,6 +256,20 @@ paths:
           description: Invalid recipe id supplied
         '404':
           description: Recipe not found
+    delete:
+      tags:
+        - recipe
+      summary: Option for user to delete their recipe
+      security:
+        - user_authorization: []
+      operationId: deleteRecipe
+      responses:
+        '200':
+          description: Collection successfully deleted
+        '400':
+          description: Bad Object
+        '404':
+          description: Review not found
   /{username}/recipes:
     parameters:
       - name: username
@@ -345,6 +361,8 @@ paths:
       summary: Create a new collection
       description: Creates a new collection and adds it to the database
       operationId: createCollection
+      security:
+        - user_authorization: []
       requestBody:
         description: Created collection object
         content:
@@ -358,20 +376,6 @@ paths:
           description: Bad request
         '500':
           description: Internal server error
-    delete:
-      tags:
-        - recipe
-      summary: Option for user to delete their recipe
-      security:
-        - user_authorization: []
-      operationId: deleteRecipe
-      responses:
-        '200':
-          description: Collection successfully deleted
-        '400':
-          description: Bad Object
-        '404':
-          description: Review not found
   /{username}/collections/{collectionid}:
     parameters:
       - name: username
@@ -491,6 +495,8 @@ paths:
       tags:
         - reviews
       operationId: updateReview
+      security:
+        - user_authorization: []
       requestBody:
         content:
           application/json:
@@ -511,6 +517,28 @@ paths:
       summary: Find reviews by id
       description: Retrieves the full reviews with a unique id
       operationId: getReviewsById
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Reviews'          
+        '400':
+          description: Invalid ID supplied
+        '404':
+          description: Review not found
+    patch:
+      tags:
+        - reviews
+      summary: Update the like counter if a user likes/removes a like from a review
+      operationId: updateLikes
+      requestBody:
+        content:
+          application/json:
+            schema: 
+              type: integer
+              format: int64
       responses:
         '200':
           description: successful operation
