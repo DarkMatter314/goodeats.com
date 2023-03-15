@@ -622,6 +622,9 @@ components:
         username:
           type: string
           example: example314
+        name:
+          type: string
+          example: Joe Mama
         emailId:
           type: string
           format: email
@@ -669,7 +672,7 @@ components:
           example: 123
         date:
           type: string
-           format: date
+          format: date
         username:
           type: integer
           format: int64
