@@ -399,6 +399,8 @@ components:
           type: integer
           format: int64
           example: 123
+        instructions:
+          type: string
         name: 
           type: string
         rating:
@@ -463,6 +465,9 @@ components:
         - username
         - rating
       properties:
+        date:
+          type: string
+          format: date
         reviewid:
           type: integer
           format: int64
