@@ -578,6 +578,8 @@ components:
         - instructions
         - username
       properties:
+        instructions:
+          type: string
         recipeid:
           type: integer
           format: int64
@@ -597,9 +599,12 @@ components:
         datepublished:
           type: string
           format: date
-        time:
+        cooktime:
           type: string
           format: time
+        preptime:
+          type: string
+          format: date
         username:
           type: string
         reviewcount:
@@ -662,6 +667,9 @@ components:
           type: integer
           format: int64
           example: 123
+        date:
+          type: string
+           format: date
         username:
           type: integer
           format: int64
