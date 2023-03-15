@@ -135,6 +135,36 @@ paths:
           description: Invalid recipe id supplied
         '404':
           description: Recipe not found
+  /recipe/findByTags:
+    get:
+      tags:
+        - recipe
+      summary: Find recipe by tags
+      description: Retrieves a list of recipes with given tags
+      operationId: getRecipeByTags
+      parameters:
+        - name: tags
+          in: query
+          description: Tags to filter by
+          required: false
+          explode: true
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items: 
+                  $ref: '#/components/schemas/Recipe'          
+        '400':
+          description: Invalid tags supplied
+        '404':
+          description: Recipes not found
   /recipe/post:
     post:
       tags:
