@@ -85,6 +85,101 @@ paths:
           description: Invalid username supplied
         '404':
           description: User not found
+    delete:
+      tags:
+        - user
+      summary: Option for user to delete their accountt
+      security:
+        - user_authorization: []
+      operationId: deleteUser
+      responses:
+        '200':
+          description: User successfully deleted
+        '400':
+          description: Bad Object
+        '404':
+          description: Review not found
+  /{username}/following:
+    parameters:
+      - name: username
+        in: path
+        description: 'The username whose following to be fetched'
+        required: true
+        schema:
+          type: string
+    get:
+      tags:
+        - user
+      summary: Get usernames of follower corresponding to a username
+      description: Displays a list of users you follow
+      operationId: getFollowingByName
+      responses:
+        '200':
+          description: Successful retrieval operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid username supplied
+        '404':
+          description: Users not found
+    patch:
+      tags:
+        - user
+      summary: Delete corresponding to 'unfollow' for a user
+      description: Change the list of followers so that
+      operationId: removeFollower
+      security:
+        - user_authorization: []
+      requestBody:
+        description: Username of user to be unfollowed
+        content:
+          application/json:
+            schema:
+              type: string
+      responses:
+        '200':
+          description: Successfully deleted a user
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '400':
+          description: invalid username supplied
+        '404':
+          description: Follower not found
+  /{username}/followers:
+    parameters:
+      - name: username
+        in: path
+        description: 'The username whose followers to be fetched'
+        required: true
+        schema:
+          type: string
+    get:
+      tags:
+        - user
+      summary: Get usernames of follower corresponding to a username
+      description: Displays a list of users you follow
+      operationId: getFollowersByName
+      responses:
+        '200':
+          description: Successful retrieval operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '400':
+          description: Invalid username supplied
+        '404':
+          description: Users not found
   /recipe/{recipeid}:
     parameters:
       - name: recipeid
@@ -93,6 +188,30 @@ paths:
         required: true
         schema:
           type: integer
+    patch:
+      tags:
+        - user
+      summary: Follow or unfollow the author of the recipe
+      operationId: addFollowing
+      requestBody:
+        description: Username of author to be followed
+        content:
+          application/json:
+            schema:
+              type: string
+      responses:
+        '200':
+          description: Successfully un/followed a user
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '400':
+          description: invalid username supplied
+        '404':
+          description: Follower not found
     get:
       tags:
         - recipe
@@ -135,6 +254,33 @@ paths:
           description: Invalid recipe id supplied
         '404':
           description: Recipe not found
+  /{username}/recipes:
+    parameters:
+      - name: username
+        in: path
+        description: 'The username whose recipes to be fetched'
+        required: true
+        schema:
+          type: string
+    get:
+      tags:
+        - recipe
+      summary: Find recipe by a user
+      description: Retrieves a list of recipes posted by a specific user
+      operationId: getRecipeByUser
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items: 
+                  $ref: '#/components/schemas/Recipe'          
+        '400':
+          description: Invalid tags supplied
+        '404':
+          description: Recipes not found
   /recipe/findByTags:
     get:
       tags:
@@ -212,6 +358,20 @@ paths:
           description: Bad request
         '500':
           description: Internal server error
+    delete:
+      tags:
+        - recipe
+      summary: Option for user to delete their recipe
+      security:
+        - user_authorization: []
+      operationId: deleteRecipe
+      responses:
+        '200':
+          description: Collection successfully deleted
+        '400':
+          description: Bad Object
+        '404':
+          description: Review not found
   /{username}/collections/{collectionid}:
     parameters:
       - name: username
@@ -267,6 +427,20 @@ paths:
           description: Invalid collection id supplied
         '404':
           description: Collection not found
+    delete:
+      tags:
+        - collections
+      summary: Option for user to delete their collection
+      security:
+        - user_authorization: []
+      operationId: deleteCollection
+      responses:
+        '200':
+          description: Collection successfully deleted
+        '400':
+          description: Bad Object
+        '404':
+          description: Review not found
   /recipe/{recipeid}/review:
     parameters:
       - name: recipeid
@@ -276,7 +450,6 @@ paths:
         schema:
           type: integer
           format: int64
-    
     post:
       tags:
         - reviews
@@ -317,9 +490,6 @@ paths:
       description: This can only be done by the author of the review
       tags:
         - reviews
-      security:
-        - user_authorization: []
-      
       operationId: updateReview
       requestBody:
         content:
@@ -352,7 +522,20 @@ paths:
           description: Invalid ID supplied
         '404':
           description: Review not found
-    
+    delete:
+      tags:
+        - reviews
+      summary: Option for user to delete their review
+      security:
+        - user_authorization: []
+      operationId: deleteReview
+      responses:
+        '200':
+          description: Review successfully deleted
+        '400':
+          description: Bad Object
+        '404':
+          description: Review not found
   
 components:
   schemas:
@@ -399,13 +582,11 @@ components:
           type: integer
           format: int64
           example: 123
-        instructions:
-          type: string
         name: 
           type: string
         rating:
-          type: integer
-          format: int32
+          type: number
+          format: float
           minimum: 1
           maximum: 5
         image:
@@ -416,12 +597,9 @@ components:
         datepublished:
           type: string
           format: date
-        cooktime:
+        time:
           type: string
           format: time
-        preptime:
-          type: string
-          format: date
         username:
           type: string
         reviewcount:
@@ -447,6 +625,14 @@ components:
           type: string
           format: password
           example: '123pass456'
+        following:
+          type: array
+          items: 
+            type: string
+        followers:
+          type: array
+          items: 
+            type: string
     Collection:
       type: object
       properties:
@@ -468,9 +654,6 @@ components:
         - username
         - rating
       properties:
-        date:
-          type: string
-          format: date
         reviewid:
           type: integer
           format: int64
