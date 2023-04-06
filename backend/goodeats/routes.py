@@ -1,8 +1,8 @@
 from flask import request, jsonify
 from flask_login import login_user, current_user, logout_user, login_required
 from goodeats import app, db, bcrypt
-from goodeats.forms import RegistrationForm, LoginForm, UpdateAccountForm, RecipeForm, NutritionalForm, IngredientForm
-from goodeats.models import User, Keywords, Ingredients, Recipe, Collections
+from goodeats.forms import RegistrationForm, LoginForm, UpdateProfileForm, RecipeForm, NutritionalForm, IngredientForm
+from goodeats.models import User, Keywords, Ingredients, Recipe, Collections, Reviews
 
 @app.errorhandler(404)
 def not_found_error(error):
@@ -79,7 +79,7 @@ def update_profile(username):
     if(current_user != user):
         return jsonify({'message': 'You do not have access to view this link'}), 403
     data = request.get_json()
-    form = UpdateAccountForm(data=data)
+    form = UpdateProfileForm(data=data)
     if form.validate_on_submit():
         current_user.username = form.username.data
         current_user.email = form.email.data
@@ -233,7 +233,7 @@ def update_recipe(recipe_id):
         }
         return jsonify(response_body), 200
     else:
-        return jsonify({'message': 'HTTP Bad Request'}), 500
+        return jsonify({'message': 'HTTP Bad Request'}), 400
 
 @app.route("/recipe/<int:recipe_id>/delete", methods=['POST'])
 @login_required
@@ -251,11 +251,8 @@ def user_recipes(username):
     recipes = Recipe.query.filter_by(author=user).all()
     recipe_list = []
     for recipe in recipes:
-        recipe_list.append({
-            'name': recipe.name, 'description': recipe.description, 'datePublished': recipe.datePublished,
-            'reviewCount': recipe.reviewCount, 'avgRating': recipe.avgRating
-        })
-    return jsonify(recipe_list)
+        recipe_list.append(recipe.to_dict())
+    return jsonify(recipe_list), 200
 
 @app.route("/recipe/<int:recipe_id>")
 def get_reviews(recipe_id):
@@ -273,5 +270,138 @@ def get_reviews(recipe_id):
     return jsonify(
         user_reviews=[review.to_dict() for review in user_reviews],
         other_reviews=[review.to_dict() for review in other_reviews]
-    )
+    ), 200
+
+@app.route("/recipe/<int:recipe_id>", methods=['POST'])
+@login_required
+def add_review(recipe_id):
+    recipe = Recipe.query.get_or_404(recipe_id)
+    data = request.get_json()
+    review = Reviews(rating=data.get('rating'), reviewText = data.get('review_text'), recipe_id=recipe_id)
+    db.session.add(review)
+    db.session.commit()
+    return jsonify({'message': 'Review successfully added'}), 200
+
+@app.route("/recipe/<int:recipe_id>", methods=['POST'])
+@login_required
+def change_review_like(recipe_id):
+    recipe = Recipe.query.get_or_404(recipe_id)
+    data = request.get_json()
+    review_id = data.get('review_id')
+    review = Reviews.query.get_or_404(review_id)
+    if(data.get('liked') == True):
+        review.reviewLikes = review.reviewLikes + 1
+    elif(data.get('unliked') == True):
+        if(review.reviewLikes <= 0):
+            return jsonify({'message': 'HTTP Bad Request'}), 400
+        review.reviewLikes = review.reviewLikes + 1
+    db.session.add(review)
+    db.session.commit()
+    return jsonify({'message': 'Success'}), 200
+
+@app.route("/recipe/<int:recipe_id>", methods=['POST'])
+@login_required
+def delete_review(recipe_id):
+    recipe = Recipe.query.get_or_404(recipe_id)
+    data = request.get_json()
+    review_id = data.get('review_id')
+    review = Reviews.query.get_or_404(review_id)
+    if(review.author != current_user):
+        return jsonify({'message': 'You do not have access to delete this review'}), 403
+    db.session.delete(review)
+    db.session.commit()
+    return jsonify({'message': 'User deleted successfully.'}), 200
+
+@app.route("/<username>/collections", methods=['GET', 'POST'])
+def collections(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    if(request.method == 'POST'):
+        if(current_user != user):
+            return jsonify({'message': 'You do not have access to view this link'}), 403
+        data = request.get_json()
+        new_collection = Collections(name=data.get('name'), user_id=user.id, recipes=None)
+        db.session.add(new_collection)
+        db.commit()
+        return jsonify({'message': 'Collection successfully created!'}), 200
+    elif(request.method == 'GET'):
+        user_collections = user.collections
+        collection_list = []
+        for collection in user_collections:
+            collection_list.append({'name': collection.name})
+        return jsonify(collection_list), 200
+    else:
+        return jsonify({'message': 'HTTP Bad Request'}), 400
     
+@app.route("/<username>/collections/<int:collection_id>", methods=['GET'])
+def collection_recipes(username, collection_id):
+    user = User.query.filter_by(username=username).first_or_404()
+    collection = Collections.query.get_or_404(collection_id)
+    if(collection.author != user):
+        return jsonify({'message':'The provided link does not exist'}), 400
+    recipe_list = []
+    for recipe in collection.recipes:
+        recipe_list.append(recipe.to_dict())
+    return jsonify(recipe_list), 200
+
+@app.route("/recipe/<int:recipe_id>", methods=['POST'])
+@login_required
+def addtoCollection(recipe_id):
+    recipe = Recipe.query.get_or_404(recipe_id)
+    data = request.get_json()
+    collection_id = data.get('collection_id')
+    collection = Collections.query.get_or_404(collection_id)
+    if(collection.author != current_user):
+        return jsonify({'message': 'You do not have access to view this link'}), 403
+    collection.recipes.append(recipe)
+    db.session.commit()
+    return jsonify({'message': 'Successfully added recipe!'}), 200
+
+@app.route("/<username>/collection/<int:collection_id>", methods=['POST'])
+@login_required
+def delete_collection(collection_id):
+    collection = Collections.query.get_or_404(collection_id)
+    if collection.author != current_user:
+        return jsonify({'message': 'You do not have access to view this link'}), 403
+    db.session.delete(collection)
+    db.session.commit()
+    return jsonify({'message': 'Recipe deleted successfully.'}), 200
+
+@app.route("/<username>/followers", methods=['GET', 'POST'])
+@login_required
+def get_following(username):
+    user = User.query.filter_by(username=username).first_or_404()
+    if(current_user != user):
+        return jsonify({'message': 'You do not have access to view this link'}), 403
+    following = user.followers.all()
+    if request.method == 'POST':
+        data = request.get_json()
+        followed_id = data.get('following_id')
+        followed_user = User.query.get_or_404(followed_id)
+        if followed_user not in following:
+            return jsonify({'message': 'User does not exist'}), 400
+        current_user.following.remove(followed_user)
+        db.session.commit()
+        return jsonify({'message': 'User successfully unfollowed!'}), 200
+    elif request.method == 'GET':
+        following_list = []
+        for followed_user in following:
+            following_list.append({'username': followed_user.username})
+        return jsonify(following_list), 200
+    else:
+        return jsonify({'message': 'HTTP Bad Request'}), 400
+
+@app.route("/recipe/<int:recipe_id>", methods=['POST'])
+@login_required
+def change_following(recipe_id):
+    recipe = Recipe.query.get_or_404(recipe_id)
+    author = recipe.author
+    if current_user == author:
+        return jsonify({'message': 'You cannot follow yourself'}), 400
+    elif current_user.is_following(author):
+        current_user.following.remove(author)
+        db.session.commit()
+        return jsonify({'message': f"You have successfully unfollowed {author.username}"}), 400
+    else:
+        current_user.following.append(author)
+        db.session.commit()
+        return jsonify({'message': f"You are now following {author.username}"}), 200
