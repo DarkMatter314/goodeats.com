@@ -1,7 +1,7 @@
 from flask import request, jsonify
 from flask_login import login_user, current_user, logout_user, login_required
 from goodeats import app, db, bcrypt
-from goodeats.forms import RegistrationForm, LoginForm, UpdateProfileForm, RecipeForm, NutritionalForm, IngredientForm
+from goodeats.forms import RegistrationForm, LoginForm, UpdateAccountForm, RecipeForm, NutritionalForm, IngredientForm
 from goodeats.models import User, Keywords, Ingredients, Recipe, Collections
 
 @app.errorhandler(404)
@@ -79,7 +79,7 @@ def update_profile(username):
     if(current_user != user):
         return jsonify({'message': 'You do not have access to view this link'}), 403
     data = request.get_json()
-    form = UpdateProfileForm(data=data)
+    form = UpdateAccountForm(data=data)
     if form.validate_on_submit():
         current_user.username = form.username.data
         current_user.email = form.email.data
