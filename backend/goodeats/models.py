@@ -1,10 +1,31 @@
 from datetime import datetime
 from goodeats import db
     
-followers = db.Table('Followers',
+followers_table = db.Table('Followers',
     db.Column('follower_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
     db.Column('following_id', db.Integer, db.ForeignKey('user.id'), primary_key=True)
 )
+
+class Reviews(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    datePosted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    rating = db.Column(db.Integer, nullable=False)
+    reviewText = db.Column(db.Text, nullable=True)
+    reviewLikes = db.Column(db.Integer, nullable=True, default=0)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    recipe_id = db.Column(db.Integer, db.ForeignKey('recipe.id'), nullable=False)
+
+    def __repr__(self):
+        return f"Review: '{self.reviewText}' by '{self.user_id.author}'"
+    
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'datePosted': self.datePosted.isoformat(),
+            'reviewText': self.reviewText,
+            'reviewLikes': self.reviewLikes,
+            'author': self.author
+        }
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -15,16 +36,20 @@ class User(db.Model):
     password = db.Column(db.String(60), nullable=False)
 
     # Relationships
-    followers = db.Relationship('User', secondary=followers,  primaryjoin=(followers.c.follower_id == id), 
-                                secondaryjoin=(followers.c.following_id == id),
-                                backref=db.backref('followers', lazy='dynamic'), 
+    followers = db.relationship('User', secondary=followers_table,  primaryjoin=(followers_table.c.follower_id == id), 
+                                secondaryjoin=(followers_table.c.following_id == id),
+                                # backref=db.backref('following', lazy='dynamic'), 
+                                lazy='dynamic')
+    following = db.relationship('User', secondary=followers_table,  primaryjoin=(followers_table.c.follower_id == id), 
+                                secondaryjoin=(followers_table.c.following_id == id),
+                                # backref=db.backref('follower', lazy='dynamic'), 
                                 lazy='dynamic')
     recipes = db.relationship('Recipe', backref='author', lazy=True)
-    reviews = db.relationship('Review', backref='author', lazy=True)
-    collections = db.relationship('Collection', backref='author', lazy=True)
+    reviews = db.relationship('Reviews', backref='author', lazy=True)
+    collections = db.relationship('Collections', backref='author', lazy=True)
 
     def __repr__(self):
-        return f"User('{self.username}', '{self.email}', '{self.image_file}')"
+        return f"User('{self.username}', '{self.email}')"
     
 recipe_keywords = db.Table('recipe_keywords',
     db.Column('recipe_id', db.Integer, db.ForeignKey('recipe.id'), primary_key=True),
@@ -83,25 +108,13 @@ class Recipe(db.Model):
     def __repr__(self):
         return f"Recipe('{self.title}', '{self.date_posted}') \n '{self.description}'"
     
-class Reviews(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    datePosted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    # rating = db.Column(db.Integer, nullable=False)
-    reviewText = db.Column(db.Text, nullable=True)
-    reviewLikes = db.Column(db.Integer, nullable=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
-    recipe_id = db.Column(db.Integer, db.ForeignKey('recipe.id'), nullable=False)
-
-    def __repr__(self):
-        return f"Review: '{self.reviewText}' by '{self.user_id.author}'"
-    
     def to_dict(self):
         return {
-            'id': self.id,
-            'datePosted': self.datePosted.isoformat(),
-            'reviewText': self.reviewText,
-            'reviewLikes': self.reviewLikes,
-            'author': self.author
+            'name': self.name, 
+            'description': self.description, 
+            'datePublished': self.datePublished,
+            'reviewCount': self.reviewCount, 
+            'avgRating': self.avgRating
         }
 
 collection_recipes = db.Table('collection_recipes',
