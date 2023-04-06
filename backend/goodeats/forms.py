@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileField, FileAllowed
+from flask_wtf.file import FileField, FileAllowed # For image files
 from flask_login import current_user
 from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField, FormField, DecimalField, FieldList
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
@@ -72,5 +72,5 @@ class RecipeForm(FlaskForm):
     cooktime = StringField('Cooking Time', validators=[Length(min=1, max=100)])
     preptime = StringField('Preparation Time', validators=[Length(min=1, max=100)])
     recipeServings = StringField('Number of servings')
-    nutritionalFacts = FormField(NutritionalForm , name ='Nutritional Information')
+    nutritionalFacts = FormField('Nutritional Information')
     submit = SubmitField('Post')
