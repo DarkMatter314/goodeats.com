@@ -1,0 +1,15 @@
+from sqlalchemy import create_engine
+from sqlalchemy.exc import OperationalError
+
+# db_url = 'mysql://localhost/recipedatabase.db'
+
+db_url ='mysql://root:naman12#$@localhost:3306/recipedatabase'
+
+
+engine = create_engine(db_url)
+
+try:
+    connection = engine.connect()
+    print('Connection successful')
+except OperationalError as e:
+    print(f'Error: {str(e)}')
