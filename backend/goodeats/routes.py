@@ -180,6 +180,7 @@ def recipe(recipe_id):
         'name': recipe.name, 'description': recipe.description, 'instructions': recipe.instructions,
         'keywords': [keyword.keyword for keyword in recipe.keywords],
         'ingredients': [{'name': ingredient.ingredient_name, 'amount': amount} for ingredient, amount in zip(recipe.ingredients, recipe.ingredientAmt.split(','))],
+
         'datePublished': recipe.datePublished, 'cooktime': recipe.cooktime, 'preptime': recipe.preptime, 
         'reviewCount': recipe.reviewCount, 'avgRating': recipe.avgRating, 'recipeServings': recipe.recipeServings
         # 'calories': recipe.calories, 'carbohydrates': recipe.carbohydrates, 'saturatedFats': recipe.saturatedFats,
