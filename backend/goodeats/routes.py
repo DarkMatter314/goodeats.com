@@ -17,7 +17,7 @@ def home():
     recipe_data = []
     for recipe in recipes:
         recipe_data.append({
-            'name': recipe.name,
+            'title': recipe.name,
             'description': recipe.description,
             'rating': recipe.avgRating
         })
@@ -52,10 +52,9 @@ def login():
     
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
-        # if user and bcrypt.check_password_hash(user.password, form.password.data):
-        if user and user.password==form.password.data:
-            val = login_user(user, remember=form.remember.data)
-            return jsonify({'message': 'You have logged in successfully', 'type':f"{val}"}), 200
+        if user and bcrypt.check_password_hash(user.password, form.password.data):
+            login_user(user, remember=form.remember.data)
+            return jsonify({'message': 'You have logged in successfully'}), 200
         else:
             return jsonify({'message': 'Username and password do not match'}), 401
     else:
@@ -66,12 +65,6 @@ def login():
 def logout():
     logout_user()
     return jsonify({'message': 'You have been logged out'}), 200
-
-@app.route("/check", methods=['GET'])
-@login_required
-def check():
-    id = current_user.id
-    return jsonify({'message': f"The current user is {id}"}), 200
 
 @app.route("/<username>", methods=['GET'])
 def profile(username):
