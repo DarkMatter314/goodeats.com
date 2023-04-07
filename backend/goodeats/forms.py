@@ -24,7 +24,7 @@ class RegistrationForm(FlaskForm):
         if user:
             raise ValidationError('There already exists an account for this email address.')
         
-class UpdateAccountForm(FlaskForm):
+class UpdateProfileForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired(), Length(min=2, max=100)])
     name = StringField('Name', validators=[DataRequired(), Length(min=2, max=100)])
     email = StringField('Email', validators=[DataRequired(), Email()])
@@ -50,27 +50,28 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Login')
 
 class IngredientForm(FlaskForm):
-    name = StringField('Name')
+    ingredient_name = StringField('Name')
     quantity = StringField('Quantity')
 
-class NutritionalForm(FlaskForm):
-    calories = DecimalField('Calories') 
-    carbohydrates = DecimalField('Carbohydrate Content')
-    saturatedFats = DecimalField('Saturated Fats')
-    cholestrol = DecimalField('Cholestrol Content')
-    fat = DecimalField('Fat Content')
-    protein = DecimalField('Protein Content')
-    fibers = DecimalField('Fiber Content')
-    sugar = DecimalField('Sugar Content')
-    sodium = DecimalField('Sodium Content')
+# class NutritionalForm(FlaskForm):
+#     calories = StringField('Calories') 
+#     carbohydrates = StringField('Carbohydrate Content')
+#     saturatedFats = StringField('Saturated Fats')
+#     cholestrol = StringField('Cholestrol Content')
+#     fat = StringField('Fat Content')
+#     protein = StringField('Protein Content')
+#     fibers = StringField('Fiber Content')
+#     sugar = StringField('Sugar Content')
+#     sodium = StringField('Sodium Content')
 
 class RecipeForm(FlaskForm):
     name = StringField('Name', validators=[DataRequired(), Length(min=1, max=100)])
     instructions = TextAreaField('Instructions', validators=[DataRequired()])
     description = TextAreaField('Description', validators=[DataRequired()])
-    ingredients = FieldList(FormField(IngredientForm), min_entries=1)
+    ingredients = FieldList(FormField(IngredientForm))
     cooktime = StringField('Cooking Time', validators=[Length(min=1, max=100)])
     preptime = StringField('Preparation Time', validators=[Length(min=1, max=100)])
     recipeServings = StringField('Number of servings')
-    nutritionalFacts = FormField('Nutritional Information')
+    # nutritionalFacts = FormField(NutritionalForm)
+    keywords = FieldList(StringField('Keywords'))
     submit = SubmitField('Post')
