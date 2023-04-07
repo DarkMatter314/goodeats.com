@@ -1,8 +1,11 @@
 from flask import request, jsonify
-from flask_login import login_user, current_user, logout_user, login_required
+from flask_login import login_user, current_user, logout_user, login_required 
 from goodeats import app, db, bcrypt
-from goodeats.forms import RegistrationForm, LoginForm, UpdateProfileForm, RecipeForm, NutritionalForm, IngredientForm
+# from goodeats.forms import RegistrationForm, LoginForm, UpdateProfileForm, RecipeForm, NutritionalForm, IngredientForm
+from goodeats.forms import RegistrationForm, LoginForm, UpdateProfileForm, RecipeForm,  IngredientForm
 from goodeats.models import User, Keywords, Ingredients, Recipe, Collections, Reviews
+from wtforms import FieldList
+from collections import namedtuple
 
 @app.errorhandler(404)
 def not_found_error(error):
@@ -17,7 +20,7 @@ def home():
     recipe_data = []
     for recipe in recipes:
         recipe_data.append({
-            'title': recipe.name,
+            'name': recipe.name,
             'description': recipe.description,
             'rating': recipe.avgRating
         })
@@ -52,9 +55,9 @@ def login():
     
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
-        if user and bcrypt.check_password_hash(user.password, form.password.data):
-            login_user(user, remember=form.remember.data)
-            return jsonify({'message': 'You have logged in successfully'}), 200
+        if user and user.password==form.password.data:
+            val = login_user(user, remember=form.remember.data)
+            return jsonify({'message': 'You have logged in successfully', 'type':f"{val}"}), 200
         else:
             return jsonify({'message': 'Username and password do not match'}), 401
     else:
@@ -65,6 +68,12 @@ def login():
 def logout():
     logout_user()
     return jsonify({'message': 'You have been logged out'}), 200
+
+@app.route("/check", methods=['GET'])
+@login_required
+def check():
+    id = current_user.id
+    return jsonify({'message': f"The current user is {id}"}), 200
 
 @app.route("/<username>", methods=['GET'])
 def profile(username):
@@ -78,25 +87,32 @@ def update_profile(username):
     user = User.query.filter_by(username=username).first_or_404()
     if(current_user != user):
         return jsonify({'message': 'You do not have access to view this link'}), 403
-    data = request.get_json()
-    form = UpdateProfileForm(data=data)
-    if form.validate_on_submit():
-        current_user.username = form.username.data
-        current_user.email = form.email.data
-        db.session.commit()
-        form_data = {
-            'username': current_user.username,
-            'email': current_user.email
-        }
-        return jsonify({'message': 'Your account has been update!d', 'form_data': form_data}), 200
+    if request.method == 'POST':
+        data = request.get_json()
+        form = UpdateProfileForm(data=data)
+        if form.validate_on_submit():
+            current_user.username = form.username.data
+            current_user.name = form.name.data
+            current_user.email = form.email.data
+            db.session.commit()
+            form_data = {
+                'username': current_user.username,
+                'name' : current_user.name,
+                'email': current_user.email
+            }
+            return jsonify({'message': 'Your account has been updated!', 'form_data': form_data}), 200
+        else:
+            return jsonify(form.errors), 400
     elif request.method == 'GET':
+        print("hi")     
         form_data = {
             'username': current_user.username,
+            'name' : current_user.name,
             'email': current_user.email
         }
-        return jsonify({'form_data': form_data}), 200
+        return jsonify(form_data), 200
     else:
-        return jsonify(form.errors), 400
+        return jsonify({"message":"Bad Request"}), 400
 
 @app.route("/<username>/delete", methods=['POST'])
 @login_required
@@ -112,40 +128,47 @@ def deleteUser(username):
 @login_required
 def new_recipe():
     data = request.get_json()
-    recipe_form = RecipeForm(data=data)
-    ingredients_list = []
+    ingredients_list = [] 
+    ing = []
+    keywords=[]
+    # print(data.get('ingredients'))
     for ingredient in data.get('ingredients'):
-        recipe_form.ingredients.append(IngredientForm(ingredient[0], ingredient[1]))
+        ing.append(IngredientForm(ingredient_name = ingredient[0], quantity = ingredient[1]))
         ingredients_list.append(ingredient[1])
-    nutritional_data = {k: v for k, v in data.items() if k in NutritionalForm().data.keys()}
-    recipe_form.nutritionalFacts = NutritionalForm(data=nutritional_data)
+    for keyword in data.get('keywords'):
+        keywords.append(keyword)
+    recipe_form = RecipeForm(data=data, ingredients=ing, keywords=keywords)
 
     if recipe_form.validate_on_submit():
         recipe = Recipe(name=recipe_form.name.data, author=current_user, instructions=recipe_form.instructions.data, 
                         description=recipe_form.description.data, ingredientAmt=", ".join(ingredients_list), 
-                        cooktime=recipe_form.cooktime.data, preptime=recipe_form.preptime.data, recipeServings=recipe_form.recipeServings.data,
-                        nutritionalFacts=recipe_form.nutritionalFacts.data)
+                        cooktime=recipe_form.cooktime.data, preptime=recipe_form.preptime.data, recipeServings=recipe_form.recipeServings.data)
         
-        for ingredient_form in recipe_form.ingredients.data:
-            name = ingredient_form.name.data
+        for ingredient_form in ing:
+            name = ingredient_form.ingredient_name.data
             ingredient = Ingredients.query.filter_by(ingredient_name=name).first()
+            # print(ingredient , name)
             if(ingredient):
                 recipe.ingredients.append(ingredient)
             else:
                 new_ingredient = Ingredients(ingredient_name = name)
+                db.session.add(new_ingredient)
+                db.session.commit()
                 recipe.ingredients.append(new_ingredient)
-        
-        for key in recipe_form.keywords.data:
-            keyword = Keywords.query.filter_by(keyword=key.data).first()
+        # return jsonify(recipe_form.ingredients.data) , 500
+        for key in keywords:
+            keyword = Keywords.query.filter_by(keyword=key).first()
             if(keyword):
                 recipe.keywords.append(keyword)
             else:
                 new_keyword = Keywords(keyword=key)
+                db.session.add(new_keyword)
+                db.session.commit()
                 recipe.keywords.append(new_keyword)
 
         db.session.add(recipe)
         db.session.commit()
-        return jsonify({'message': 'Your post has been created!'}), 200
+        return jsonify(recipe.to_dict()), 200
     
     else:
         return jsonify(recipe_form.errors), 400
@@ -157,11 +180,11 @@ def recipe(recipe_id):
         'name': recipe.name, 'description': recipe.description, 'instructions': recipe.instructions,
         'keywords': [keyword.keyword for keyword in recipe.keywords],
         'ingredients': [{'name': ingredient.ingredient_name, 'amount': amount} for ingredient, amount in zip(recipe.ingredients, recipe.ingredientAmt.split(','))],
-        'datePublished': recipe.datePublished, 'cookTime': recipe.cooktime, 'prepTime': recipe.preptime, 
-        'reviewCount': recipe.reviewCount, 'avgRating': recipe.avgRating, 'recipeServings': recipe.recipeServings,
-        'calories': recipe.calories, 'carbohydrates': recipe.carbohydrates, 'saturatedFats': recipe.saturatedFats,
-        'cholestrol': recipe.cholestrol, 'fat': recipe.fat, 'protein': recipe.protein,
-        'fibers': recipe.fibers, 'sugar': recipe.sugar, 'sodium': recipe.sodium
+        'datePublished': recipe.datePublished, 'cooktime': recipe.cooktime, 'preptime': recipe.preptime, 
+        'reviewCount': recipe.reviewCount, 'avgRating': recipe.avgRating, 'recipeServings': recipe.recipeServings
+        # 'calories': recipe.calories, 'carbohydrates': recipe.carbohydrates, 'saturatedFats': recipe.saturatedFats,
+        # 'cholestrol': recipe.cholestrol, 'fat': recipe.fat, 'protein': recipe.protein,
+        # 'fibers': recipe.fibers, 'sugar': recipe.sugar, 'sodium': recipe.sodium
     }
     return jsonify(response_body), 200
 
@@ -174,15 +197,26 @@ def update_recipe(recipe_id):
 
     if request.method == 'POST':
         data = request.get_json()
-        recipe_form = RecipeForm(data=data, ingredients=None, nutritionalFacts=None)
-        ingredients_list = []
+        # recipe_form = RecipeForm(data=data, ingredients=None, nutritionalFacts=None)
+        # ingredients_list = []
+        # for ingredient in data.get('ingredients'):
+        #     recipe_form.ingredients.append(IngredientForm(ingredient[0], ingredient[1]))
+        #     ingredients_list.append(ingredient[1])
+        # nutritional_data = {k: v for k, v in data.items() if k in NutritionalForm().data.keys()}
+        # recipe_form.nutritionalFacts = NutritionalForm(data=nutritional_data)
+        ingredients_list = [] 
+        ing = []
+        keywords=[]
+        # print(data.get('ingredients'))
         for ingredient in data.get('ingredients'):
-            recipe_form.ingredients.append(IngredientForm(ingredient[0], ingredient[1]))
+            ing.append(IngredientForm(ingredient_name = ingredient[0], quantity = ingredient[1]))
             ingredients_list.append(ingredient[1])
-        nutritional_data = {k: v for k, v in data.items() if k in NutritionalForm().data.keys()}
-        recipe_form.nutritionalFacts = NutritionalForm(data=nutritional_data)
-
+        for keyword in data.get('keywords'):
+            keywords.append(keyword)
+        recipe_form = RecipeForm(data=data, ingredients=ing, keywords=keywords)
+        
         if(recipe_form.validate_on_submit()):
+            print("hi")
             recipe.name = recipe_form.name.data
             recipe.instructions = recipe_form.instructions.data
             recipe.description = recipe_form.description.data
@@ -194,8 +228,8 @@ def update_recipe(recipe_id):
             recipe.keywords.clear()
             ingredients_list = []
 
-            for ingredient_form in recipe_form.ingredients:
-                name = ingredient_form.name.data
+            for ingredient_form in ing:
+                name = ingredient_form.ingredient_name.data
                 quantity = ingredient_form.quantity.data
                 ingredient_amount = f"{quantity}"
                 ingredients_list.append(ingredient_amount)
@@ -204,32 +238,36 @@ def update_recipe(recipe_id):
                     recipe.ingredients.append(ingredient)
                 else:
                     new_ingredient = Ingredients(ingredient_name = name)
+                    db.session.add(new_ingredient)
+                    db.session.commit()
                     recipe.ingredients.append(new_ingredient)
 
-            for key in recipe_form.keywords.data:
+            for key in keywords:
                 keyword = Keywords.query.filter_by(keyword=key).first()
                 if(keyword):
                     recipe.keywords.append(keyword)
                 else:
                     new_keyword = Keywords(keyword=key)
+                    db.session.add(new_keyword)
+                    db.session.commit()
                     recipe.keywords.append(new_keyword)
 
             recipe.ingredientAmt = ", ".join(ingredients_list)
             db.session.commit()
-            return jsonify({'Your recipe has been updated!'}), 200
+            return jsonify({'message': 'Your recipe has been updated!'}), 200
         else:
             return jsonify(recipe_form.errors), 400
     
     elif request.method == 'GET':
         response_body = {
             'name': recipe.name, 'description': recipe.description, 'instructions': recipe.instructions,
-            'keywords': [keyword.name for keyword in recipe.keywords],
-            'ingredients': [{'name': ingredient.name, 'amount': amount} for ingredient, amount in zip(recipe.ingredients, recipe.ingredientAmt.split(','))],
-            'datePublished': recipe.datePublished, 'cookTime': recipe.cooktime, 'prepTime': recipe.preptime, 
-            'reviewCount': recipe.reviewCount, 'avgRating': recipe.avgRating, 'recipeServings': recipe.recipeServings,
-            'calories': recipe.calories, 'carbohydrates': recipe.carbohydrates, 'saturatedFats': recipe.saturatedFats,
-            'cholestrol': recipe.cholestrol, 'fat': recipe.fat, 'protein': recipe.protein,
-            'fibers': recipe.fibers, 'sugar': recipe.sugar, 'sodium': recipe.sodium
+            'keywords': [keyword.keyword for keyword in recipe.keywords],
+            'ingredients': [{'name': ingredient.ingredient_name, 'amount': amount} for ingredient, amount in zip(recipe.ingredients, recipe.ingredientAmt.split(','))],
+            'datePublished': recipe.datePublished, 'cooktime': recipe.cooktime, 'preptime': recipe.preptime, 
+            'reviewCount': recipe.reviewCount, 'avgRating': recipe.avgRating, 'recipeServings': recipe.recipeServings
+            # 'calories': recipe.calories, 'carbohydrates': recipe.carbohydrates, 'saturatedFats': recipe.saturatedFats,
+            # 'cholestrol': recipe.cholestrol, 'fat': recipe.fat, 'protein': recipe.protein,
+            # 'fibers': recipe.fibers, 'sugar': recipe.sugar, 'sodium': recipe.sodium
         }
         return jsonify(response_body), 200
     else:
@@ -258,7 +296,8 @@ def user_recipes(username):
 def get_reviews(recipe_id):
     recipe = Recipe.query.get_or_404(recipe_id)
     review_list = recipe.reviews
-    user_reviews = [], other_reviews = []
+    user_reviews = [] 
+    other_reviews = []
     for review in review_list:
         if current_user.is_authenticated:
             if review.author == current_user:
@@ -267,9 +306,9 @@ def get_reviews(recipe_id):
                 other_reviews.append(review)
         else:
             other_reviews.append(review)
-    return jsonify(
-        user_reviews=[review.to_dict() for review in user_reviews],
-        other_reviews=[review.to_dict() for review in other_reviews]
+    return jsonify({
+        'user_reviews':[review.to_dict() for review in user_reviews],
+        'other_reviews':[review.to_dict() for review in other_reviews]}
     ), 200
 
 @app.route("/recipe/<int:recipe_id>", methods=['POST'])

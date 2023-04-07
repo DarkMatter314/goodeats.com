@@ -1,12 +1,13 @@
 from datetime import datetime
 from goodeats.database import db
-    
+from flask_login import UserMixin
+
 followers_table = db.Table('Followers',
     db.Column('follower_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
     db.Column('following_id', db.Integer, db.ForeignKey('user.id'), primary_key=True)
 )
 
-class User(db.Model):
+class User(db.Model , UserMixin):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
     name = db.Column(db.String(100), unique=False, nullable=False)
@@ -20,14 +21,13 @@ class User(db.Model):
                                 # backref=db.backref('following', lazy='dynamic'), 
                                 lazy='dynamic')
     following = db.relationship('User', secondary=followers_table,  primaryjoin=(followers_table.c.following_id == id), 
-                                secondaryjoin=(followers_table.c.followers_id == id),
+                                secondaryjoin=(followers_table.c.follower_id == id),
                                 # backref=db.backref('follower', lazy='dynamic'), 
                                 lazy='dynamic')
     recipes = db.relationship('Recipe', backref='author', lazy=True)
     reviews = db.relationship('Reviews', backref='author', lazy=True)
     collections = db.relationship('Collections', backref='author', lazy=True)
     is_active = True
-
     def __repr__(self):
         return f"User('{self.username}', '{self.email}')"
     
@@ -56,7 +56,7 @@ class Ingredients(db.Model):
     ingredient_name = db.Column(db.String(100), nullable=False)
 
     def __repr__(self):
-        return f"Ingredient: '{self.keyword}'"  
+        return f"Ingredient: '{self.ingredient_name}'"  
 
 class Recipe(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -72,15 +72,15 @@ class Recipe(db.Model):
     recipeServings = db.Column(db.Integer, nullable=True)
 
     #Nutritional Information
-    calories = db.Column(db.Numeric, nullable=True)
-    carbohydrates = db.Column(db.Numeric, nullable=True)
-    saturatedFats = db.Column(db.Numeric, nullable=True)
-    cholestrol = db.Column(db.Numeric, nullable=True)
-    fat = db.Column(db.Numeric, nullable=True)
-    protein = db.Column(db.Numeric, nullable=True)
-    fibers = db.Column(db.Numeric, nullable=True)
-    sugar = db.Column(db.Numeric, nullable=True)
-    sodium = db.Column(db.Numeric, nullable=True)
+    # calories = db.Column(db.String(10), nullable=True)
+    # carbohydrates = db.Column(db.String(10), nullable=True)
+    # saturatedFats = db.Column(db.String(10), nullable=True)
+    # cholestrol = db.Column(db.String(10), nullable=True)
+    # fat = db.Column(db.String(10), nullable=True)
+    # protein = db.Column(db.String(10), nullable=True)
+    # fibers = db.Column(db.String(10), nullable=True)
+    # sugar = db.Column(db.String(10), nullable=True)
+    # sodium = db.Column(db.String(10), nullable=True)
 
     #Relationships
     reviews = db.relationship('Reviews', backref='recipe', lazy=False)
@@ -89,15 +89,21 @@ class Recipe(db.Model):
     ingredients = db.relationship('Ingredients', secondary=recipe_ingredients, lazy='subquery', backref=db.backref('recipes', lazy=True))
 
     def __repr__(self):
-        return f"Recipe('{self.title}', '{self.date_posted}') \n '{self.description}'"
+        return f"Recipe('{self.name}', '{self.datePublished}') \n '{self.description}'"
     
     def to_dict(self):
         return {
+            'recipe_id': self.id,
             'name': self.name, 
             'description': self.description, 
             'datePublished': self.datePublished,
             'reviewCount': self.reviewCount, 
-            'avgRating': self.avgRating
+            'avgRating': self.avgRating,
+            'cooktime': self.cooktime,
+            'preptime' : self.preptime,
+            'recipeServings' : self.recipeServings,
+            'ingredientAmt' : self.ingredientAmt
+            # 'keywords' : self.keywords
         }
     
 class Reviews(db.Model):
