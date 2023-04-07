@@ -180,7 +180,8 @@ def recipe(recipe_id):
         'name': recipe.name, 'description': recipe.description, 'instructions': recipe.instructions,
         'keywords': [keyword.keyword for keyword in recipe.keywords],
         'ingredients': [{'name': ingredient.ingredient_name, 'amount': amount} for ingredient, amount in zip(recipe.ingredients, recipe.ingredientAmt.split(','))],
-        'datePublished': recipe.datePublished, 'cookTime': recipe.cooktime, 'prepTime': recipe.preptime, 
+
+        'datePublished': recipe.datePublished, 'cooktime': recipe.cooktime, 'preptime': recipe.preptime, 
         'reviewCount': recipe.reviewCount, 'avgRating': recipe.avgRating, 'recipeServings': recipe.recipeServings
         # 'calories': recipe.calories, 'carbohydrates': recipe.carbohydrates, 'saturatedFats': recipe.saturatedFats,
         # 'cholestrol': recipe.cholestrol, 'fat': recipe.fat, 'protein': recipe.protein,
@@ -254,20 +255,20 @@ def update_recipe(recipe_id):
 
             recipe.ingredientAmt = ", ".join(ingredients_list)
             db.session.commit()
-            return jsonify({'Your recipe has been updated!'}), 200
+            return jsonify({'message': 'Your recipe has been updated!'}), 200
         else:
             return jsonify(recipe_form.errors), 400
     
     elif request.method == 'GET':
         response_body = {
             'name': recipe.name, 'description': recipe.description, 'instructions': recipe.instructions,
-            'keywords': [keyword.name for keyword in recipe.keywords],
-            'ingredients': [{'name': ingredient.name, 'amount': amount} for ingredient, amount in zip(recipe.ingredients, recipe.ingredientAmt.split(','))],
-            'datePublished': recipe.datePublished, 'cookTime': recipe.cooktime, 'prepTime': recipe.preptime, 
-            'reviewCount': recipe.reviewCount, 'avgRating': recipe.avgRating, 'recipeServings': recipe.recipeServings,
-            'calories': recipe.calories, 'carbohydrates': recipe.carbohydrates, 'saturatedFats': recipe.saturatedFats,
-            'cholestrol': recipe.cholestrol, 'fat': recipe.fat, 'protein': recipe.protein,
-            'fibers': recipe.fibers, 'sugar': recipe.sugar, 'sodium': recipe.sodium
+            'keywords': [keyword.keyword for keyword in recipe.keywords],
+            'ingredients': [{'name': ingredient.ingredient_name, 'amount': amount} for ingredient, amount in zip(recipe.ingredients, recipe.ingredientAmt.split(','))],
+            'datePublished': recipe.datePublished, 'cooktime': recipe.cooktime, 'preptime': recipe.preptime, 
+            'reviewCount': recipe.reviewCount, 'avgRating': recipe.avgRating, 'recipeServings': recipe.recipeServings
+            # 'calories': recipe.calories, 'carbohydrates': recipe.carbohydrates, 'saturatedFats': recipe.saturatedFats,
+            # 'cholestrol': recipe.cholestrol, 'fat': recipe.fat, 'protein': recipe.protein,
+            # 'fibers': recipe.fibers, 'sugar': recipe.sugar, 'sodium': recipe.sodium
         }
         return jsonify(response_body), 200
     else:
@@ -296,7 +297,8 @@ def user_recipes(username):
 def get_reviews(recipe_id):
     recipe = Recipe.query.get_or_404(recipe_id)
     review_list = recipe.reviews
-    user_reviews = [], other_reviews = []
+    user_reviews = [] 
+    other_reviews = []
     for review in review_list:
         if current_user.is_authenticated:
             if review.author == current_user:
@@ -305,9 +307,9 @@ def get_reviews(recipe_id):
                 other_reviews.append(review)
         else:
             other_reviews.append(review)
-    return jsonify(
-        user_reviews=[review.to_dict() for review in user_reviews],
-        other_reviews=[review.to_dict() for review in other_reviews]
+    return jsonify({
+        'user_reviews':[review.to_dict() for review in user_reviews],
+        'other_reviews':[review.to_dict() for review in other_reviews]}
     ), 200
 
 @app.route("/recipe/<int:recipe_id>", methods=['POST'])

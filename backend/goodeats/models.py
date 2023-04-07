@@ -98,7 +98,12 @@ class Recipe(db.Model):
             'description': self.description, 
             'datePublished': self.datePublished,
             'reviewCount': self.reviewCount, 
-            'avgRating': self.avgRating
+            'avgRating': self.avgRating,
+            'cooktime': self.cooktime,
+            'preptime' : self.preptime,
+            'recipeServings' : self.recipeServings,
+            'ingredientAmt' : self.ingredientAmt
+            # 'keywords' : self.keywords
         }
     
 class Reviews(db.Model):
