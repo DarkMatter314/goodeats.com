@@ -86,25 +86,31 @@ def update_profile(username):
     user = User.query.filter_by(username=username).first_or_404()
     if(current_user != user):
         return jsonify({'message': 'You do not have access to view this link'}), 403
-    data = request.get_json()
-    form = UpdateProfileForm(data=data)
-    if form.validate_on_submit():
-        current_user.username = form.username.data
-        current_user.email = form.email.data
-        db.session.commit()
-        form_data = {
-            'username': current_user.username,
-            'email': current_user.email
-        }
-        return jsonify({'message': 'Your account has been update!d', 'form_data': form_data}), 200
+    if request.method == 'POST':
+        data = request.get_json()
+        form = UpdateProfileForm(data=data)
+        if form.validate_on_submit():
+            current_user.username = form.username.data
+            current_user.email = form.email.data
+            current_user.name = form.name.data
+            db.session.commit()
+            form_data = {
+                'username': current_user.username,
+                'name': current_user.name,
+                'email': current_user.email
+            }
+            return jsonify({'message': 'Your account has been updated!', 'form_data': form_data}), 200
+        else:
+            return jsonify(form.errors), 400
     elif request.method == 'GET':
         form_data = {
             'username': current_user.username,
+            'name': current_user.name,
             'email': current_user.email
         }
-        return jsonify({'form_data': form_data}), 200
+        return jsonify(form_data), 200
     else:
-        return jsonify(form.errors), 400
+        return jsonify({'message': 'Bad Request'}), 400
 
 @app.route("/<username>/delete", methods=['POST'])
 @login_required
