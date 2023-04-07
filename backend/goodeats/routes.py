@@ -5,7 +5,7 @@ from goodeats import app, db, bcrypt
 from goodeats.forms import RegistrationForm, LoginForm, UpdateProfileForm, RecipeForm,  IngredientForm
 from goodeats.models import User, Keywords, Ingredients, Recipe, Collections, Reviews
 from wtforms import FieldList
-from collections import namedtuple
+from sqlalchemy import or_
 
 @app.errorhandler(404)
 def not_found_error(error):
@@ -69,11 +69,11 @@ def logout():
     logout_user()
     return jsonify({'message': 'You have been logged out'}), 200
 
-@app.route("/check", methods=['GET'])
-@login_required
-def check():
-    id = current_user.id
-    return jsonify({'message': f"The current user is {id}"}), 200
+# @app.route("/check", methods=['GET'])
+# @login_required
+# def check():
+#     id = current_user.id
+#     return jsonify({'message': f"The current user is {id}"}), 200
 
 @app.route("/<username>", methods=['GET'])
 def profile(username):
@@ -180,7 +180,6 @@ def recipe(recipe_id):
         'name': recipe.name, 'description': recipe.description, 'instructions': recipe.instructions,
         'keywords': [keyword.keyword for keyword in recipe.keywords],
         'ingredients': [{'name': ingredient.ingredient_name, 'amount': amount} for ingredient, amount in zip(recipe.ingredients, recipe.ingredientAmt.split(','))],
-
         'datePublished': recipe.datePublished, 'cooktime': recipe.cooktime, 'preptime': recipe.preptime, 
         'reviewCount': recipe.reviewCount, 'avgRating': recipe.avgRating, 'recipeServings': recipe.recipeServings
         # 'calories': recipe.calories, 'carbohydrates': recipe.carbohydrates, 'saturatedFats': recipe.saturatedFats,
@@ -292,6 +291,30 @@ def user_recipes(username):
     for recipe in recipes:
         recipe_list.append(recipe.to_dict())
     return jsonify(recipe_list), 200
+
+
+@app.route("/search", methods=['GET'])
+def search():
+    data = request.get_json().get('search_query')
+    search_queries = [x.strip() for x in data.split(',')]
+    recipes = Recipe.query.filter(or_(Recipe.name.ilike(f'%{name}%') for name in search_queries),
+                                   or_(Recipe.ingredients.ilike(f'%{ing}%') for ing in search_queries),
+                                   or_(Recipe.keywords.ilike(f'%{kw}%') for kw in search_queries)).all()
+
+    # Calculate matching percentages for each recipe
+    matches = []
+    for recipe in recipes:
+        name_matches = sum(name in recipe.name.lower() for name in search_queries)
+        ing_matches = sum(ing in recipe.ingredients.lower() for ing in search_queries)
+        kw_matches = sum(kw in recipe.keywords.lower() for kw in search_queries)
+        total_matches = name_matches + ing_matches + kw_matches
+        match_percent = total_matches / len(search_queries)
+        matches.append((recipe, match_percent))
+
+    # Sort recipes by descending match percentage
+    sorted_recipes = [x[0] for x in sorted(matches, key=lambda x: x[1], reverse=True)]
+
+    return jsonify([sorted_recipe.to_dict() for sorted_recipe in sorted_recipes])
 
 @app.route("/recipe/<int:recipe_id>")
 def get_reviews(recipe_id):
