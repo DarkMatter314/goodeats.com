@@ -17,7 +17,7 @@ def home():
     recipe_data = []
     for recipe in recipes:
         recipe_data.append({
-            'title': recipe.title,
+            'name': recipe.name,
             'description': recipe.description,
             'rating': recipe.avgRating
         })
@@ -52,9 +52,10 @@ def login():
     
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
-        if user and bcrypt.check_password_hash(user.password, form.password.data):
-            login_user(user, remember=form.remember.data)
-            return jsonify({'message': 'You have logged in successfully'}), 200
+        # if user and bcrypt.check_password_hash(user.password, form.password.data):
+        if user and user.password==form.password.data:
+            val = login_user(user, remember=form.remember.data)
+            return jsonify({'message': 'You have logged in successfully', 'type':f"{val}"}), 200
         else:
             return jsonify({'message': 'Username and password do not match'}), 401
     else:
@@ -65,6 +66,12 @@ def login():
 def logout():
     logout_user()
     return jsonify({'message': 'You have been logged out'}), 200
+
+@app.route("/check", methods=['GET'])
+@login_required
+def check():
+    id = current_user.id
+    return jsonify({'message': f"The current user is {id}"}), 200
 
 @app.route("/<username>", methods=['GET'])
 def profile(username):
@@ -155,8 +162,8 @@ def recipe(recipe_id):
     recipe = Recipe.query.get_or_404(recipe_id)
     response_body = {
         'name': recipe.name, 'description': recipe.description, 'instructions': recipe.instructions,
-        'keywords': [keyword.name for keyword in recipe.keywords],
-        'ingredients': [{'name': ingredient.name, 'amount': amount} for ingredient, amount in zip(recipe.ingredients, recipe.ingredientAmt.split(','))],
+        'keywords': [keyword.keyword for keyword in recipe.keywords],
+        'ingredients': [{'name': ingredient.ingredient_name, 'amount': amount} for ingredient, amount in zip(recipe.ingredients, recipe.ingredientAmt.split(','))],
         'datePublished': recipe.datePublished, 'cookTime': recipe.cooktime, 'prepTime': recipe.preptime, 
         'reviewCount': recipe.reviewCount, 'avgRating': recipe.avgRating, 'recipeServings': recipe.recipeServings,
         'calories': recipe.calories, 'carbohydrates': recipe.carbohydrates, 'saturatedFats': recipe.saturatedFats,

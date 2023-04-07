@@ -1,5 +1,5 @@
 from datetime import datetime
-from goodeats import db
+from goodeats.database import db
     
 followers_table = db.Table('Followers',
     db.Column('follower_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
@@ -19,16 +19,20 @@ class User(db.Model):
                                 secondaryjoin=(followers_table.c.following_id == id),
                                 # backref=db.backref('following', lazy='dynamic'), 
                                 lazy='dynamic')
-    following = db.relationship('User', secondary=followers_table,  primaryjoin=(followers_table.c.follower_id == id), 
-                                secondaryjoin=(followers_table.c.following_id == id),
+    following = db.relationship('User', secondary=followers_table,  primaryjoin=(followers_table.c.following_id == id), 
+                                secondaryjoin=(followers_table.c.followers_id == id),
                                 # backref=db.backref('follower', lazy='dynamic'), 
                                 lazy='dynamic')
     recipes = db.relationship('Recipe', backref='author', lazy=True)
     reviews = db.relationship('Reviews', backref='author', lazy=True)
     collections = db.relationship('Collections', backref='author', lazy=True)
+    is_active = True
 
     def __repr__(self):
         return f"User('{self.username}', '{self.email}')"
+    
+    def get_id(self):
+        return f"{id}"
     
 recipe_keywords = db.Table('recipe_keywords',
     db.Column('recipe_id', db.Integer, db.ForeignKey('recipe.id'), primary_key=True),
@@ -118,7 +122,7 @@ class Reviews(db.Model):
         }
 
 collection_recipes = db.Table('collection_recipes',
-    db.Column('collection_id', db.Integer, db.ForeignKey('collection.id'), primary_key=True),
+    db.Column('collection_id', db.Integer, db.ForeignKey('collections.id'), primary_key=True),
     db.Column('recipe_id', db.Integer, db.ForeignKey('recipe.id'), primary_key=True)
 )
 
