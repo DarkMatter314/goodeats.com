@@ -2,7 +2,7 @@ from flask import Flask
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
 from goodeats.database import db
-from goodeats.models import User
+from goodeats.models import User 
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = '5791628bb0b13ce0c676dfde280ba245'
@@ -17,7 +17,7 @@ login_manager = LoginManager()
 
 @login_manager.user_loader
 def load_user(id):
-    return User.query.get(int(id))
+    return User.query.get(int(id)) 
 
 login_manager.init_app(app)
 
