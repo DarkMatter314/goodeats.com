@@ -41,33 +41,3 @@ def login_user(client, user):
     return user
 
 
-
-@pytest.fixture
-def new_recipe(client,current_user):
-
-    with app.app_context():
-        # create a test user
-        # user = User(username='testuser', email='testuser@example.com')
-        # user.set_password('testpassword')
-        # db.session.add(user)
-        # db.session.commit()
-
-        keyword1 = Keywords(keyword='test')
-        keyword2 = Keywords(keyword='recipe')
-        ingredient1 = Ingredients(ingredient_name='test_ingredient1')
-        ingredient2 = Ingredients(ingredient_name='test_ingredient2')
-        recipe = Recipe(name='test_recipe', description='test_description', instructions='test_instructions',
-                    ingredientAmt='1,2', cooktime='30', preptime='10', user_id = current_user.id, 
-                    reviewCount=0, avgRating=0, recipeServings=4, keywords=[keyword1, keyword2],
-                    ingredients=[ingredient1, ingredient2])
-        db.session.add(recipe)
-        db.session.commit()
-        # client.post('recipe/post' , json = recipe.to_dict)
-        
-        yield recipe
-
-        # cleanup
-        db.session.delete(recipe)
-        # db.session.delete(user)
-        db.session.commit()
-

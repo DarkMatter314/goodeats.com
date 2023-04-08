@@ -6,8 +6,8 @@ from flask_login import login_user, current_user, logout_user, login_required
 from goodeats import app, db, bcrypt
 from goodeats.forms import RegistrationForm, LoginForm, UpdateProfileForm, RecipeForm,  IngredientForm
 from goodeats.models import User, Keywords, Ingredients, Recipe, Collections, Reviews
-from sqlalchemy import or_, case
 
+from sqlalchemy import or_, case
 class FileExtError(Exception):
     pass
 
@@ -45,6 +45,7 @@ def save_collection_picture(form_picture):
     i.save(picture_path)
     return picture_fn
 
+
 @app.errorhandler(404)
 def not_found_error(error):
     response = jsonify({'error': 'Not found'})
@@ -59,7 +60,7 @@ def home():
     for recipe in recipes:
         recipe_image = url_for('images', filename='recipe_pics/' + recipe.recipe_image)
         recipe_data.append({
-            'id': recipe.id,
+            'id' : recipe.id,
             'name': recipe.name,
             'description': recipe.description,
             'rating': recipe.avgRating,
@@ -256,10 +257,10 @@ def update_recipe(recipe_id):
         recipe_form = RecipeForm(data=data, ingredients=ing, keywords=keywords)
         
         if(recipe_form.validate_on_submit()):
+
             if recipe_form.picture.data:
                 picture_file = save_recipe_picture(recipe_form.picture.data)
                 recipe.recipe_image = picture_file
-
             recipe.name = recipe_form.name.data
             recipe.instructions = recipe_form.instructions.data
             recipe.description = recipe_form.description.data
@@ -335,8 +336,6 @@ def user_recipes(username):
         recipe_list.append(recipe_dict)
     return jsonify(recipe_list), 200
 
-
-
 @app.route("/search", methods=['GET'])
 def search():
     keywords = request.args.get('keywords', '').split(',')
@@ -346,8 +345,10 @@ def search():
     keyword_match = [Keywords.keyword.ilike('%{}%'.format(keyword.strip())) for keyword in keywords]
     ingredient_match = [Ingredients.ingredient_name.ilike('%{}%'.format(keyword.strip())) for keyword in keywords]
     query = Recipe.query.filter(or_(*name_match)).outerjoin(Recipe.keywords).filter(or_(*keyword_match)
+
     ).outerjoin(Recipe.ingredients
     ).filter(or_(*ingredient_match)
+
     ).order_by(
     case(
         (Recipe.name.ilike('%{}%'.format(keywords)), 1),
@@ -356,10 +357,10 @@ def search():
         else_=4
     ))
 
+
     # Execute the query and return the results
     results = query.all()
     return jsonify([recipe.to_dict() for recipe in results])
-
 
 @app.route("/recipe/<int:recipe_id>/reviews")
 def get_reviews(recipe_id):
@@ -369,26 +370,24 @@ def get_reviews(recipe_id):
     other_reviews = []
     for review in review_list:
         if current_user.is_authenticated:
-            if review.author == current_user:
+            if current_user == review.author:
                 user_reviews.append(review)
             else:
                 other_reviews.append(review)
         else:
             other_reviews.append(review)
-    return jsonify({
-        'user_reviews':[review.to_dict() for review in user_reviews],
-        'other_reviews':[review.to_dict() for review in other_reviews]}
-    ), 200
+    return jsonify({'user_reviews':[review.to_dict() for review in user_reviews],
+                    'other_reviews':[review.to_dict() for review in other_reviews]}), 200
 
 @app.route("/recipe/<int:recipe_id>/reviews/new", methods=['POST'])
 @login_required
 def add_review(recipe_id):
     recipe = Recipe.query.get_or_404(recipe_id)
     data = request.get_json()
-    review = Reviews(rating=data.get('rating'), reviewText = data.get('review_text'), recipe_id=recipe_id)
+    review = Reviews(rating=data.get('rating'), reviewText = data.get('review_text'), recipe_id=recipe_id , user_id = current_user.id)
     db.session.add(review)
     db.session.commit()
-    return jsonify({'message': 'Review successfully added'}), 200
+    return jsonify(review.to_dict()), 200
 
 @app.route("/recipe/<int:recipe_id>/reviews/like", methods=['POST'])
 @login_required
@@ -402,7 +401,7 @@ def change_review_like(recipe_id):
     elif(data.get('unliked') == True):
         if(review.reviewLikes <= 0):
             return jsonify({'message': 'HTTP Bad Request'}), 400
-        review.reviewLikes = review.reviewLikes + 1
+        review.reviewLikes = review.reviewLikes - 1
     db.session.add(review)
     db.session.commit()
     return jsonify({'message': 'Success'}), 200
@@ -418,7 +417,7 @@ def delete_review(recipe_id):
         return jsonify({'message': 'You do not have access to delete this review'}), 403
     db.session.delete(review)
     db.session.commit()
-    return jsonify({'message': 'User deleted successfully.'}), 200
+    return jsonify({'message': 'Review deleted successfully.'}), 200
 
 @app.route("/<username>/collections", methods=['GET', 'POST'])
 def collections(username):
@@ -427,6 +426,7 @@ def collections(username):
         if(current_user != user):
             return jsonify({'message': 'You do not have access to view this link'}), 403
         data = request.get_json()
+
         picture_file = None
         collection_image = data.get('collection_image')
         if(collection_image != None):
@@ -435,7 +435,8 @@ def collections(username):
         new_collection = Collections(name=data.get('name'), user_id=user.id, recipes=[], collection_image=picture_file)
         db.session.add(new_collection)
         db.session.commit()
-        return jsonify({'message': 'Collection successfully created!'}), 200
+        return jsonify(new_collection.to_dict()), 200
+
     elif(request.method == 'GET'):
         user_collections = user.collections
         collection_list = []
@@ -472,6 +473,7 @@ def addtoCollection(recipe_id):
 
 @app.route("/<username>/collections/<int:collection_id>/delete", methods=['POST'])
 @login_required
+
 def delete_collection(username, collection_id):
     user = User.query.filter_by(username=username).first_or_404()
     collection = Collections.query.get_or_404(collection_id)
@@ -479,7 +481,7 @@ def delete_collection(username, collection_id):
         return jsonify({'message': 'You do not have access to view this link'}), 403
     db.session.delete(collection)
     db.session.commit()
-    return jsonify({'message': 'Recipe deleted successfully.'}), 200
+    return jsonify({'message': 'Collection deleted successfully.'}), 200
 
 @app.route("/<username>/following", methods=['GET', 'POST'])
 @login_required
@@ -510,9 +512,10 @@ def get_following(username):
 def change_following(recipe_id):
     recipe = Recipe.query.get_or_404(recipe_id)
     author = recipe.author
-    if current_user == author:
+    # print(current_user.id , author.id)
+    if current_user.id == author.id:
         return jsonify({'message': 'You cannot follow yourself'}), 400
-    elif current_user.is_following(author):
+    elif author in current_user.following.all():
         current_user.following.remove(author)
         db.session.commit()
         return jsonify({'message': f"You have successfully unfollowed {author.username}"}), 400
@@ -525,9 +528,10 @@ def change_following(recipe_id):
 @login_required
 def follow_user(username):
     user = User.query.filter_by(username=username).first_or_404()
+
     if current_user == user:
         return jsonify({'message': 'You cannot follow yourself'}), 400
-    elif current_user.is_following(user):
+    elif user in current_user.following.all():
         current_user.following.remove(user)
         db.session.commit()
         return jsonify({'message': f"You have successfully unfollowed {user.username}"}), 400
