@@ -1,6 +1,7 @@
 from datetime import datetime
 from goodeats.database import db
 from flask_login import UserMixin
+import random
 
 followers_table = db.Table('Followers',
     db.Column('follower_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
@@ -8,11 +9,11 @@ followers_table = db.Table('Followers',
 )
 
 class User(db.Model , UserMixin):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer, unique=True, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
     name = db.Column(db.String(100), unique=False, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    # image_file = db.Column(db.String(20), nullable=False, default='default.jpg')
+    image_file = db.Column(db.String(20), nullable=False, default='default.jpg')
     password = db.Column(db.String(60), nullable=False)
 
     # Relationships
@@ -30,6 +31,9 @@ class User(db.Model , UserMixin):
     is_active = True
     def __repr__(self):
         return f"User('{self.username}', '{self.email}')"
+    
+    def __eq__(self, other):
+        return self.id == other.id
     
     def get_id(self):
         return f"{id}"
@@ -77,19 +81,9 @@ class Recipe(db.Model):
     cooktime = db.Column(db.String(20), nullable=True)
     preptime = db.Column(db.String(20), nullable=True)
     reviewCount = db.Column(db.Integer, nullable=True)
-    avgRating = db.Column(db.Integer, nullable=True)
+    avgRating = db.Column(db.Integer, nullable=True, default=3.5+random.random())
     recipeServings = db.Column(db.Integer, nullable=True)
-
-    #Nutritional Information
-    # calories = db.Column(db.String(10), nullable=True)
-    # carbohydrates = db.Column(db.String(10), nullable=True)
-    # saturatedFats = db.Column(db.String(10), nullable=True)
-    # cholestrol = db.Column(db.String(10), nullable=True)
-    # fat = db.Column(db.String(10), nullable=True)
-    # protein = db.Column(db.String(10), nullable=True)
-    # fibers = db.Column(db.String(10), nullable=True)
-    # sugar = db.Column(db.String(10), nullable=True)
-    # sodium = db.Column(db.String(10), nullable=True)
+    recipe_image = db.Column(db.String(20), nullable=False, default='default.jpg')
 
     #Relationships
     reviews = db.relationship('Reviews', backref='recipe', lazy=False)
@@ -114,6 +108,7 @@ class Recipe(db.Model):
             'recipeServings' : self.recipeServings,
             'ingredientAmt' : self.ingredientAmt,
             'keywords': [keyword.keyword for keyword in self.keywords]
+
         }
     def __eq__ (self , user):
         return self.id == user.id
@@ -149,7 +144,10 @@ collection_recipes = db.Table('collection_recipes',
 
 class Collections(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+
+    description = db.Column(db.Text, nullable=True)
     name = db.Column(db.String(100), nullable=False)
+
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     recipes = db.relationship('Recipe', secondary=collection_recipes, lazy='subquery', backref=db.backref('recipes', lazy=True))
 

@@ -1,11 +1,50 @@
-from flask import request, jsonify
+import os
+import secrets
+from PIL import Image
+from flask import request, jsonify, url_for
 from flask_login import login_user, current_user, logout_user, login_required 
 from goodeats import app, db, bcrypt
-# from goodeats.forms import RegistrationForm, LoginForm, UpdateProfileForm, RecipeForm, NutritionalForm, IngredientForm
 from goodeats.forms import RegistrationForm, LoginForm, UpdateProfileForm, RecipeForm,  IngredientForm
 from goodeats.models import User, Keywords, Ingredients, Recipe, Collections, Reviews
-from wtforms import FieldList
-from sqlalchemy import or_ , case
+
+from sqlalchemy import or_, case
+class FileExtError(Exception):
+    pass
+
+def save_user_picture(form_picture):
+    random_hex = secrets.token_hex(8)
+    _, f_ext = os.path.splitext(form_picture.filename)
+    picture_fn = random_hex + f_ext
+    picture_path = os.path.join(app.root_path, 'images/profile_pics', picture_fn)
+    output_size = (125, 125)
+    i = Image.open(form_picture)
+    i.thumbnail(output_size)
+    i.save(picture_path)
+    return picture_fn
+
+def save_recipe_picture(form_picture):
+    random_hex = secrets.token_hex(8)
+    _, f_ext = os.path.splitext(form_picture.filename)
+    picture_fn = random_hex + f_ext
+    picture_path = os.path.join(app.root_path, 'images/recipe_pics', picture_fn)
+    output_size = (125, 125)
+    i = Image.open(form_picture)
+    i.thumbnail(output_size)
+    i.save(picture_path)
+    return picture_fn
+
+def save_collection_picture(form_picture):
+    random_hex = secrets.token_hex(8)
+    _, f_ext = os.path.splitext(form_picture.filename)
+    if(f_ext != '.txt' and f_ext != '.png' and f_ext != '.jpeg'): raise FileExtError('Wrong File Extension')
+    picture_fn = random_hex + f_ext
+    picture_path = os.path.join(app.root_path, 'images/collection_pics', picture_fn)
+    output_size = (125, 125)
+    i = Image.open(form_picture)
+    i.thumbnail(output_size)
+    i.save(picture_path)
+    return picture_fn
+
 
 @app.errorhandler(404)
 def not_found_error(error):
@@ -19,11 +58,13 @@ def home():
     recipes = Recipe.query.order_by(Recipe.datePublished.desc()).paginate(per_page=10)
     recipe_data = []
     for recipe in recipes:
+        recipe_image = url_for('images', filename='recipe_pics/' + recipe.recipe_image)
         recipe_data.append({
             'id' : recipe.id,
             'name': recipe.name,
             'description': recipe.description,
-            'rating': recipe.avgRating
+            'rating': recipe.avgRating,
+            'recipe_image': recipe_image
         })
     return jsonify(recipe_data), 200
 
@@ -33,10 +74,14 @@ def register():
         return jsonify({'message': 'You are already logged in!'}), 200
     data = request.get_json()
     form = RegistrationForm(username=data.get('username'), name=data.get('name'), email=data.get('email'), 
-                            password=data.get('password'), confirm_password=data.get('confirm_password'))
+                            password=data.get('password'), confirm_password=data.get('confirm_password'),
+                            picture=data.get('image_file'))
     if form.validate_on_submit():
+        picture_file = None
+        if form.picture.data:
+            picture_file = save_user_picture(form.picture.data)
         hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
-        user = User(username=form.username.data, name=form.name.data, email=form.email.data, password=hashed_password)
+        user = User(username=form.username.data, name=form.name.data, email=form.email.data, password=hashed_password, image_file=picture_file)
         db.session.add(user)
         db.session.commit()
         return jsonify({'message': 'Your account has been created! You are now able to log in'}), 200
@@ -70,16 +115,11 @@ def logout():
     logout_user()
     return jsonify({'message': 'You have been logged out'}), 200
 
-# @app.route("/check", methods=['GET'])
-# @login_required
-# def check():
-#     id = current_user.id
-#     return jsonify({'message': f"The current user is {id}"}), 200
-
 @app.route("/<username>", methods=['GET'])
 def profile(username):
     user = User.query.filter_by(username=username).first_or_404()
-    response_data = {'username': user.username, 'name': user.name, 'email': user.email}
+    image_file = url_for('images', filename = 'profile_pics/' + current_user.image_file)
+    response_data = {'username': user.username, 'name': user.name, 'email': user.email, 'image_file': image_file}
     return jsonify(response_data), 200
 
 @app.route("/<username>/update", methods=['GET', 'POST'])
@@ -92,24 +132,30 @@ def update_profile(username):
         data = request.get_json()
         form = UpdateProfileForm(data=data)
         if form.validate_on_submit():
+            if form.picture.data:
+                picture_file = save_user_picture(form.picture.data)
+                current_user.image_file = picture_file
             current_user.username = form.username.data
             current_user.name = form.name.data
             current_user.email = form.email.data
             db.session.commit()
+            image_file = url_for('images', filename='profile_pics/' + current_user.image_file)
             form_data = {
                 'username': current_user.username,
                 'name' : current_user.name,
-                'email': current_user.email
+                'email': current_user.email,
+                'image_file': image_file
             }
             return jsonify({'message': 'Your account has been updated!', 'form_data': form_data}), 200
         else:
             return jsonify(form.errors), 400
     elif request.method == 'GET':
-        print("hi")     
+        image_file = url_for('images', filename='profile_pics/' + current_user.image_file)
         form_data = {
             'username': current_user.username,
             'name' : current_user.name,
-            'email': current_user.email
+            'email': current_user.email,
+            'image_file': image_file
         }
         return jsonify(form_data), 200
     else:
@@ -141,9 +187,13 @@ def new_recipe():
     recipe_form = RecipeForm(data=data, ingredients=ing, keywords=keywords)
 
     if recipe_form.validate_on_submit():
+        picture_file = None
+        if recipe_form.picture.data:
+            picture_file = save_recipe_picture(recipe_form.picture.data)
         recipe = Recipe(name=recipe_form.name.data, author=current_user, instructions=recipe_form.instructions.data, 
                         description=recipe_form.description.data, ingredientAmt=", ".join(ingredients_list), 
-                        cooktime=recipe_form.cooktime.data, preptime=recipe_form.preptime.data, recipeServings=recipe_form.recipeServings.data)
+                        cooktime=recipe_form.cooktime.data, preptime=recipe_form.preptime.data, recipeServings=recipe_form.recipeServings.data,
+                        recipe_image=picture_file)
         
         for ingredient_form in ing:
             name = ingredient_form.ingredient_name.data
@@ -182,10 +232,8 @@ def recipe(recipe_id):
         'keywords': [keyword.keyword for keyword in recipe.keywords],
         'ingredients': [{'name': ingredient.ingredient_name, 'amount': amount} for ingredient, amount in zip(recipe.ingredients, recipe.ingredientAmt.split(','))],
         'datePublished': recipe.datePublished, 'cooktime': recipe.cooktime, 'preptime': recipe.preptime, 
-        'reviewCount': recipe.reviewCount, 'avgRating': recipe.avgRating, 'recipeServings': recipe.recipeServings
-        # 'calories': recipe.calories, 'carbohydrates': recipe.carbohydrates, 'saturatedFats': recipe.saturatedFats,
-        # 'cholestrol': recipe.cholestrol, 'fat': recipe.fat, 'protein': recipe.protein,
-        # 'fibers': recipe.fibers, 'sugar': recipe.sugar, 'sodium': recipe.sodium
+        'reviewCount': recipe.reviewCount, 'avgRating': recipe.avgRating, 'recipeServings': recipe.recipeServings,
+        'recipe_image': url_for('images', filename='recipe_pics/' + recipe.recipe_image)
     }
     return jsonify(response_body), 200
 
@@ -198,17 +246,9 @@ def update_recipe(recipe_id):
 
     if request.method == 'POST':
         data = request.get_json()
-        # recipe_form = RecipeForm(data=data, ingredients=None, nutritionalFacts=None)
-        # ingredients_list = []
-        # for ingredient in data.get('ingredients'):
-        #     recipe_form.ingredients.append(IngredientForm(ingredient[0], ingredient[1]))
-        #     ingredients_list.append(ingredient[1])
-        # nutritional_data = {k: v for k, v in data.items() if k in NutritionalForm().data.keys()}
-        # recipe_form.nutritionalFacts = NutritionalForm(data=nutritional_data)
         ingredients_list = [] 
         ing = []
         keywords=[]
-        # print(data.get('ingredients'))
         for ingredient in data.get('ingredients'):
             ing.append(IngredientForm(ingredient_name = ingredient[0], quantity = ingredient[1]))
             ingredients_list.append(ingredient[1])
@@ -217,7 +257,10 @@ def update_recipe(recipe_id):
         recipe_form = RecipeForm(data=data, ingredients=ing, keywords=keywords)
         
         if(recipe_form.validate_on_submit()):
-            # print("hi")
+
+            if recipe_form.picture.data:
+                picture_file = save_recipe_picture(recipe_form.picture.data)
+                recipe.recipe_image = picture_file
             recipe.name = recipe_form.name.data
             recipe.instructions = recipe_form.instructions.data
             recipe.description = recipe_form.description.data
@@ -265,10 +308,8 @@ def update_recipe(recipe_id):
             'keywords': [keyword.keyword for keyword in recipe.keywords],
             'ingredients': [{'name': ingredient.ingredient_name, 'amount': amount} for ingredient, amount in zip(recipe.ingredients, recipe.ingredientAmt.split(','))],
             'datePublished': recipe.datePublished, 'cooktime': recipe.cooktime, 'preptime': recipe.preptime, 
-            'reviewCount': recipe.reviewCount, 'avgRating': recipe.avgRating, 'recipeServings': recipe.recipeServings
-            # 'calories': recipe.calories, 'carbohydrates': recipe.carbohydrates, 'saturatedFats': recipe.saturatedFats,
-            # 'cholestrol': recipe.cholestrol, 'fat': recipe.fat, 'protein': recipe.protein,
-            # 'fibers': recipe.fibers, 'sugar': recipe.sugar, 'sodium': recipe.sodium
+            'reviewCount': recipe.reviewCount, 'avgRating': recipe.avgRating, 'recipeServings': recipe.recipeServings,
+            'recipe_image': url_for('images', filename='recipe_pics/' + recipe.recipe_image)
         }
         return jsonify(response_body), 200
     else:
@@ -290,9 +331,10 @@ def user_recipes(username):
     recipes = Recipe.query.filter_by(author=user).all()
     recipe_list = []
     for recipe in recipes:
-        recipe_list.append(recipe.to_dict())
+        recipe_dict = recipe.to_dict()
+        recipe_dict['recipe_image'] = url_for('images', filename='recipe_pics/' + recipe.recipe_image)
+        recipe_list.append(recipe_dict)
     return jsonify(recipe_list), 200
-
 
 @app.route("/search", methods=['GET'])
 def search():
@@ -303,18 +345,18 @@ def search():
     keyword_match = [Keywords.keyword.ilike('%{}%'.format(keyword.strip())) for keyword in keywords]
     ingredient_match = [Ingredients.ingredient_name.ilike('%{}%'.format(keyword.strip())) for keyword in keywords]
     query = Recipe.query.filter(or_(*name_match)).outerjoin(Recipe.keywords).filter(or_(*keyword_match)
-    ).outerjoin(
-        Recipe.ingredients
-    ).filter(
-        or_(*ingredient_match)
+
+    ).outerjoin(Recipe.ingredients
+    ).filter(or_(*ingredient_match)
+
     ).order_by(
     case(
         (Recipe.name.ilike('%{}%'.format(keywords)), 1),
         (Keywords.keyword.ilike('%{}%'.format(keywords)), 2),
         (Ingredients.ingredient_name.ilike('%{}%'.format(keywords)), 3),
         else_=4
-    )
-    )
+    ))
+
 
     # Execute the query and return the results
     results = query.all()
@@ -384,16 +426,23 @@ def collections(username):
         if(current_user != user):
             return jsonify({'message': 'You do not have access to view this link'}), 403
         data = request.get_json()
-        # print(data.get('name') , user.id)
-        new_collection = Collections(name=data.get('name'), user_id=user.id,recipes=[])
+
+        picture_file = None
+        collection_image = data.get('collection_image')
+        if(collection_image != None):
+            try: picture_file = save_collection_picture(data.get('collection_image'))
+            except: return jsonify({'error': 'File must have extension .jpg or .jpeg or .png'})
+        new_collection = Collections(name=data.get('name'), user_id=user.id, recipes=[], collection_image=picture_file)
         db.session.add(new_collection)
         db.session.commit()
         return jsonify(new_collection.to_dict()), 200
+
     elif(request.method == 'GET'):
         user_collections = user.collections
         collection_list = []
         for collection in user_collections:
-            collection_list.append({'name': collection.name})
+            collection_list.append({'name': collection.name, 'description': collections.description, 'user_id': collection.user_id,
+                                    'collection_image': url_for('images', filename='collection_pics/' + collection.collection_image)})
         return jsonify(collection_list), 200
     else:
         return jsonify({'message': 'HTTP Bad Request'}), 400
@@ -424,7 +473,8 @@ def addtoCollection(recipe_id):
 
 @app.route("/<username>/collections/<int:collection_id>/delete", methods=['POST'])
 @login_required
-def delete_collection(collection_id , username):
+
+def delete_collection(username, collection_id):
     user = User.query.filter_by(username=username).first_or_404()
     collection = Collections.query.get_or_404(collection_id)
     if collection.author != current_user:
@@ -457,8 +507,6 @@ def get_following(username):
     else:
         return jsonify({'message': 'HTTP Bad Request'}), 400
 
-
-
 @app.route("/recipe/<int:recipe_id>/follow", methods=['POST'])
 @login_required
 def change_following(recipe_id):
@@ -480,7 +528,8 @@ def change_following(recipe_id):
 @login_required
 def follow_user(username):
     user = User.query.filter_by(username=username).first_or_404()
-    if current_user.id == user.id:
+
+    if current_user == user:
         return jsonify({'message': 'You cannot follow yourself'}), 400
     elif user in current_user.following.all():
         current_user.following.remove(user)
