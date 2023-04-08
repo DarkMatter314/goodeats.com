@@ -6,8 +6,8 @@ from flask_login import login_user, current_user, logout_user, login_required
 from goodeats import app, db, bcrypt
 from goodeats.forms import RegistrationForm, LoginForm, UpdateProfileForm, RecipeForm,  IngredientForm
 from goodeats.models import User, Keywords, Ingredients, Recipe, Collections, Reviews
-
 from sqlalchemy import or_, case
+
 class FileExtError(Exception):
     pass
 
@@ -15,7 +15,7 @@ def save_user_picture(form_picture):
     random_hex = secrets.token_hex(8)
     _, f_ext = os.path.splitext(form_picture.filename)
     picture_fn = random_hex + f_ext
-    picture_path = os.path.join(app.root_path, 'images/profile_pics', picture_fn)
+    picture_path = os.path.join(app.root_path, 'static/profile_pics', picture_fn)
     output_size = (125, 125)
     i = Image.open(form_picture)
     i.thumbnail(output_size)
@@ -26,7 +26,7 @@ def save_recipe_picture(form_picture):
     random_hex = secrets.token_hex(8)
     _, f_ext = os.path.splitext(form_picture.filename)
     picture_fn = random_hex + f_ext
-    picture_path = os.path.join(app.root_path, 'images/recipe_pics', picture_fn)
+    picture_path = os.path.join(app.root_path, 'static/recipe_pics', picture_fn)
     output_size = (125, 125)
     i = Image.open(form_picture)
     i.thumbnail(output_size)
@@ -38,7 +38,7 @@ def save_collection_picture(form_picture):
     _, f_ext = os.path.splitext(form_picture.filename)
     if(f_ext != '.txt' and f_ext != '.png' and f_ext != '.jpeg'): raise FileExtError('Wrong File Extension')
     picture_fn = random_hex + f_ext
-    picture_path = os.path.join(app.root_path, 'images/collection_pics', picture_fn)
+    picture_path = os.path.join(app.root_path, 'static/collection_pics', picture_fn)
     output_size = (125, 125)
     i = Image.open(form_picture)
     i.thumbnail(output_size)
@@ -58,13 +58,15 @@ def home():
     recipes = Recipe.query.order_by(Recipe.datePublished.desc()).paginate(per_page=10)
     recipe_data = []
     for recipe in recipes:
-        recipe_image = url_for('images', filename='recipe_pics/' + recipe.recipe_image)
+        user = recipe.author
         recipe_data.append({
-            'id' : recipe.id,
+            'id': recipe.id,
             'name': recipe.name,
             'description': recipe.description,
             'rating': recipe.avgRating,
-            'recipe_image': recipe_image
+            'recipe_image': url_for('static', filename='recipe_pics/' + recipe.recipe_image),
+            'id': user.id,
+            'profile_picture': url_for('static', filename='profile_pics/' + user.image_file)
         })
     return jsonify(recipe_data), 200
 
@@ -118,7 +120,7 @@ def logout():
 @app.route("/<username>", methods=['GET'])
 def profile(username):
     user = User.query.filter_by(username=username).first_or_404()
-    image_file = url_for('images', filename = 'profile_pics/' + current_user.image_file)
+    image_file = url_for('static', filename = 'profile_pics/' + user.image_file)
     response_data = {'username': user.username, 'name': user.name, 'email': user.email, 'image_file': image_file}
     return jsonify(response_data), 200
 
@@ -139,7 +141,7 @@ def update_profile(username):
             current_user.name = form.name.data
             current_user.email = form.email.data
             db.session.commit()
-            image_file = url_for('images', filename='profile_pics/' + current_user.image_file)
+            image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
             form_data = {
                 'username': current_user.username,
                 'name' : current_user.name,
@@ -150,7 +152,7 @@ def update_profile(username):
         else:
             return jsonify(form.errors), 400
     elif request.method == 'GET':
-        image_file = url_for('images', filename='profile_pics/' + current_user.image_file)
+        image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
         form_data = {
             'username': current_user.username,
             'name' : current_user.name,
@@ -178,7 +180,6 @@ def new_recipe():
     ingredients_list = [] 
     ing = []
     keywords=[]
-    # print(data.get('ingredients'))
     for ingredient in data.get('ingredients'):
         ing.append(IngredientForm(ingredient_name = ingredient[0], quantity = ingredient[1]))
         ingredients_list.append(ingredient[1])
@@ -198,7 +199,6 @@ def new_recipe():
         for ingredient_form in ing:
             name = ingredient_form.ingredient_name.data
             ingredient = Ingredients.query.filter_by(ingredient_name=name).first()
-            # print(ingredient , name)
             if(ingredient):
                 recipe.ingredients.append(ingredient)
             else:
@@ -206,7 +206,6 @@ def new_recipe():
                 db.session.add(new_ingredient)
                 db.session.commit()
                 recipe.ingredients.append(new_ingredient)
-        # return jsonify(recipe_form.ingredients.data) , 500
         for key in keywords:
             keyword = Keywords.query.filter_by(keyword=key).first()
             if(keyword):
@@ -227,13 +226,15 @@ def new_recipe():
 @app.route("/recipe/<int:recipe_id>", methods=['GET'])
 def recipe(recipe_id):
     recipe = Recipe.query.get_or_404(recipe_id)
+    user = recipe.author
     response_body = {
         'name': recipe.name, 'description': recipe.description, 'instructions': recipe.instructions,
         'keywords': [keyword.keyword for keyword in recipe.keywords],
         'ingredients': [{'name': ingredient.ingredient_name, 'amount': amount} for ingredient, amount in zip(recipe.ingredients, recipe.ingredientAmt.split(','))],
         'datePublished': recipe.datePublished, 'cooktime': recipe.cooktime, 'preptime': recipe.preptime, 
         'reviewCount': recipe.reviewCount, 'avgRating': recipe.avgRating, 'recipeServings': recipe.recipeServings,
-        'recipe_image': url_for('images', filename='recipe_pics/' + recipe.recipe_image)
+        'recipe_image': url_for('static', filename='recipe_pics/' + recipe.recipe_image),
+        'username': user.username, 'profile_picture': url_for('static', filename='profile_pics/' + user.image_file), 'user_id': user.id
     }
     return jsonify(response_body), 200
 
@@ -303,13 +304,15 @@ def update_recipe(recipe_id):
             return jsonify(recipe_form.errors), 400
     
     elif request.method == 'GET':
+        user = recipe.author
         response_body = {
             'name': recipe.name, 'description': recipe.description, 'instructions': recipe.instructions,
             'keywords': [keyword.keyword for keyword in recipe.keywords],
             'ingredients': [{'name': ingredient.ingredient_name, 'amount': amount} for ingredient, amount in zip(recipe.ingredients, recipe.ingredientAmt.split(','))],
             'datePublished': recipe.datePublished, 'cooktime': recipe.cooktime, 'preptime': recipe.preptime, 
             'reviewCount': recipe.reviewCount, 'avgRating': recipe.avgRating, 'recipeServings': recipe.recipeServings,
-            'recipe_image': url_for('images', filename='recipe_pics/' + recipe.recipe_image)
+            'recipe_image': url_for('static', filename='recipe_pics/' + recipe.recipe_image),
+            'username': user.username, 'profile_picture': url_for('static', filename='profile_pics/' + user.image_file), 'user_id': user.id
         }
         return jsonify(response_body), 200
     else:
@@ -331,8 +334,12 @@ def user_recipes(username):
     recipes = Recipe.query.filter_by(author=user).all()
     recipe_list = []
     for recipe in recipes:
+        user = recipe.author
         recipe_dict = recipe.to_dict()
-        recipe_dict['recipe_image'] = url_for('images', filename='recipe_pics/' + recipe.recipe_image)
+        recipe_dict['recipe_image'] = url_for('static', filename='recipe_pics/' + recipe.recipe_image)
+        recipe_dict['user_id'] = user.id
+        recipe_dict['username'] = user.username
+        recipe_dict['profile_pic'] = url_for('static', filename='profile_pics/' + user.image_file)
         recipe_list.append(recipe_dict)
     return jsonify(recipe_list), 200
 
@@ -360,7 +367,16 @@ def search():
 
     # Execute the query and return the results
     results = query.all()
-    return jsonify([recipe.to_dict() for recipe in results])
+    response_body = []
+    for recipe in results:
+        user = recipe.author
+        recipe_dict = recipe.to_dict()
+        recipe_dict['recipe_image'] = url_for('static', filename='recipe_pics/' + recipe.recipe_image)
+        recipe_dict['user_id'] = user.id
+        recipe_dict['username'] = user.username
+        recipe_dict['profile_pic'] = url_for('static', filename='profile_pics/' + user.image_file)
+        response_body.append(recipe_dict)
+    return jsonify(response_body)
 
 @app.route("/recipe/<int:recipe_id>/reviews")
 def get_reviews(recipe_id):
@@ -441,8 +457,8 @@ def collections(username):
         user_collections = user.collections
         collection_list = []
         for collection in user_collections:
-            collection_list.append({'name': collection.name, 'description': collections.description, 'user_id': collection.user_id,
-                                    'collection_image': url_for('images', filename='collection_pics/' + collection.collection_image)})
+            collection_list.append({'name': collection.name, 'description': collection.description, 'user_id': collection.user_id,
+                                    'collection_image': url_for('static', filename='collection_pics/' + collection.collection_image)})
         return jsonify(collection_list), 200
     else:
         return jsonify({'message': 'HTTP Bad Request'}), 400
