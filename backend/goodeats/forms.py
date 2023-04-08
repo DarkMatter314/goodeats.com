@@ -52,7 +52,7 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Login')
 
 class IngredientForm(FlaskForm):
-    ingredietn_name = StringField('Name')
+    ingredient_name = StringField('Name')
     quantity = StringField('Quantity')
 
 class RecipeForm(FlaskForm):
