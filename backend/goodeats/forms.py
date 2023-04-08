@@ -5,7 +5,6 @@ from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextA
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError
 from goodeats.models import User
 
-
 class RegistrationForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired(), Length(min=2, max=100)])
     name = StringField('Name', validators=[DataRequired(), Length(min=2, max=100)])
@@ -66,3 +65,4 @@ class RecipeForm(FlaskForm):
     recipeServings = StringField('Number of servings')
     keywords = FieldList(StringField('Keywords'))
     submit = SubmitField('Post')
+    picture = FileField('Recipe Image', validators=[FileAllowed(['jpg', 'png', 'jpeg'])])

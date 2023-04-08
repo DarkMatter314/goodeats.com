@@ -147,7 +147,7 @@ class Collections(db.Model):
 
     description = db.Column(db.Text, nullable=True)
     name = db.Column(db.String(100), nullable=False)
-
+    collection_image = db.Column(db.String(20), nullable=False, default='default.jpg')
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     recipes = db.relationship('Recipe', secondary=collection_recipes, lazy='subquery', backref=db.backref('recipes', lazy=True))
 
