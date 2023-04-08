@@ -29,6 +29,7 @@ class User(db.Model , UserMixin):
     reviews = db.relationship('Reviews', backref='author', lazy=True)
     collections = db.relationship('Collections', backref='author', lazy=True)
     is_active = True
+
     def __repr__(self):
         return f"User('{self.username}', '{self.email}')"
     
@@ -37,9 +38,6 @@ class User(db.Model , UserMixin):
     
     def get_id(self):
         return f"{id}"
-    
-    def __eq__ (self , user):
-        return self.id == user.id
     
 recipe_keywords = db.Table('recipe_keywords',
     db.Column('recipe_id', db.Integer, db.ForeignKey('recipe.id'), primary_key=True),
@@ -57,9 +55,6 @@ class Keywords(db.Model):
 
     def __repr__(self):
         return f"Keyword: '{self.keyword}'"
-    
-    def __eq__ (self , user):
-        return self.id == user.id
 
 class Ingredients(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -67,9 +62,6 @@ class Ingredients(db.Model):
 
     def __repr__(self):
         return f"Ingredient: '{self.ingredient_name}'"  
-    
-    def __eq__ (self , user):
-        return self.id == user.id
 
 class Recipe(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -103,15 +95,12 @@ class Recipe(db.Model):
             'reviewCount': self.reviewCount, 
             'avgRating': self.avgRating,
             'cooktime': self.cooktime,
-            'ingredients': [{'name': ingredient.ingredient_name, 'amount': amount} for ingredient, amount in zip(self.ingredients, self.ingredientAmt.split(','))], 
             'preptime' : self.preptime,
             'recipeServings' : self.recipeServings,
             'ingredientAmt' : self.ingredientAmt,
-            'keywords': [keyword.keyword for keyword in self.keywords]
-
+            'keywords': [keyword.keyword for keyword in self.keywords],
+            'ingredients': [{'name': ingredient.ingredient_name, 'amount': amount} for ingredient, amount in zip(self.ingredients, self.ingredientAmt.split(','))]
         }
-    def __eq__ (self , user):
-        return self.id == user.id
     
 class Reviews(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -133,9 +122,6 @@ class Reviews(db.Model):
             'reviewLikes': self.reviewLikes,
             'user_id': self.user_id
         }
-    
-    def __eq__ (self , user):
-        return self.id == user.id
 
 collection_recipes = db.Table('collection_recipes',
     db.Column('collection_id', db.Integer, db.ForeignKey('collections.id'), primary_key=True),
@@ -144,23 +130,11 @@ collection_recipes = db.Table('collection_recipes',
 
 class Collections(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-
+    collectionName = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=True)
-    name = db.Column(db.String(100), nullable=False)
-    collection_image = db.Column(db.String(20), nullable=False, default='default.jpg')
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     recipes = db.relationship('Recipe', secondary=collection_recipes, lazy='subquery', backref=db.backref('recipes', lazy=True))
+    collection_image = db.Column(db.String(20), nullable=False, default='default.jpg')
 
     def __repr__(self):
-        return f"Collection '{self.name}' created by '{self.user_id.author}'"
-
-    def to_dict(self):
-        return {
-            'collection_id': self.id,
-            'collection_name': self.name, 
-            'user_id' : self.user_id,
-            'recipes' : self.recipes
-        }
-    
-    def __eq__ (self , user):
-        return self.id == user.id
+        return f"Collection '{self.collectionName}' created by '{self.user_id.author}'"
