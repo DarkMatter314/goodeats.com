@@ -316,7 +316,7 @@ def search():
 
     return jsonify([sorted_recipe.to_dict() for sorted_recipe in sorted_recipes])
 
-@app.route("/recipe/<int:recipe_id>")
+@app.route("/recipe/<int:recipe_id>/reviews")
 def get_reviews(recipe_id):
     recipe = Recipe.query.get_or_404(recipe_id)
     review_list = recipe.reviews
@@ -330,22 +330,20 @@ def get_reviews(recipe_id):
                 other_reviews.append(review)
         else:
             other_reviews.append(review)
-    return jsonify({
-        'user_reviews':[review.to_dict() for review in user_reviews],
-        'other_reviews':[review.to_dict() for review in other_reviews]}
-    ), 200
+    return jsonify({'user_reviews':[review.to_dict() for review in user_reviews],
+                    'other_reviews':[review.to_dict() for review in other_reviews]}), 200
 
-@app.route("/recipe/<int:recipe_id>", methods=['POST'])
+@app.route("/recipe/<int:recipe_id>/reviews/new", methods=['POST'])
 @login_required
 def add_review(recipe_id):
     recipe = Recipe.query.get_or_404(recipe_id)
     data = request.get_json()
-    review = Reviews(rating=data.get('rating'), reviewText = data.get('review_text'), recipe_id=recipe_id)
+    review = Reviews(rating=data.get('rating'), reviewText = data.get('review_text'), recipe_id=recipe_id , user_id = current_user.id)
     db.session.add(review)
     db.session.commit()
-    return jsonify({'message': 'Review successfully added'}), 200
+    return jsonify(review.to_dict()), 200
 
-@app.route("/recipe/<int:recipe_id>", methods=['POST'])
+@app.route("/recipe/<int:recipe_id>/reviews/like", methods=['POST'])
 @login_required
 def change_review_like(recipe_id):
     recipe = Recipe.query.get_or_404(recipe_id)
@@ -357,12 +355,12 @@ def change_review_like(recipe_id):
     elif(data.get('unliked') == True):
         if(review.reviewLikes <= 0):
             return jsonify({'message': 'HTTP Bad Request'}), 400
-        review.reviewLikes = review.reviewLikes + 1
+        review.reviewLikes = review.reviewLikes - 1
     db.session.add(review)
     db.session.commit()
     return jsonify({'message': 'Success'}), 200
 
-@app.route("/recipe/<int:recipe_id>", methods=['POST'])
+@app.route("/recipe/<int:recipe_id>/reviews/delete", methods=['POST'])
 @login_required
 def delete_review(recipe_id):
     recipe = Recipe.query.get_or_404(recipe_id)
@@ -373,7 +371,7 @@ def delete_review(recipe_id):
         return jsonify({'message': 'You do not have access to delete this review'}), 403
     db.session.delete(review)
     db.session.commit()
-    return jsonify({'message': 'User deleted successfully.'}), 200
+    return jsonify({'message': 'Review deleted successfully.'}), 200
 
 @app.route("/<username>/collections", methods=['GET', 'POST'])
 def collections(username):

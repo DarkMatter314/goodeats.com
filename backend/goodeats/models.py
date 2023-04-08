@@ -120,11 +120,11 @@ class Reviews(db.Model):
     
     def to_dict(self):
         return {
-            'id': self.id,
-            'datePosted': self.datePosted.isoformat(),
+            'review_id': self.id,
+            # 'datePosted': self.datePosted.isoformat(),
             'reviewText': self.reviewText,
             'reviewLikes': self.reviewLikes,
-            'author': self.author
+            'user_id': self.user_id
         }
 
 collection_recipes = db.Table('collection_recipes',
