@@ -13,7 +13,7 @@ class User(db.Model , UserMixin):
     username = db.Column(db.String(100), unique=True, nullable=False)
     name = db.Column(db.String(100), unique=False, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    image_file = db.Column(db.String(20), nullable=False, default='default.jpg')
+    image_file = db.Column(db.Text, nullable=False, default='/static/profile_pics/default.jpg')
     password = db.Column(db.String(60), nullable=False)
 
     # Relationships
@@ -55,6 +55,9 @@ class Keywords(db.Model):
 
     def __repr__(self):
         return f"Keyword: '{self.keyword}'"
+    
+    def __eq__ (self , user):
+        return self.id == user.id
 
 class Ingredients(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -62,6 +65,9 @@ class Ingredients(db.Model):
 
     def __repr__(self):
         return f"Ingredient: '{self.ingredient_name}'"  
+    
+    def __eq__ (self , user):
+        return self.id == user.id
 
 class Recipe(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -75,7 +81,7 @@ class Recipe(db.Model):
     reviewCount = db.Column(db.Integer, nullable=True)
     avgRating = db.Column(db.Integer, nullable=True, default=3.5+random.random())
     recipeServings = db.Column(db.Integer, nullable=True)
-    recipe_image = db.Column(db.String(20), nullable=False, default='default.jpg')
+    recipe_image = db.Column(db.Text, nullable=False, default='/static/recipe_pics/default.jpg')
 
     #Relationships
     reviews = db.relationship('Reviews', backref='recipe', lazy=False)
@@ -85,6 +91,9 @@ class Recipe(db.Model):
 
     def __repr__(self):
         return f"Recipe('{self.name}', '{self.datePublished}') \n '{self.description}'"
+    
+    def __eq__ (self , user):
+        return self.id == user.id
     
     def to_dict(self):
         return {
@@ -98,9 +107,13 @@ class Recipe(db.Model):
             'preptime' : self.preptime,
             'recipeServings' : self.recipeServings,
             'ingredientAmt' : self.ingredientAmt,
+            'recipe_image': self.recipe_image,
             'keywords': [keyword.keyword for keyword in self.keywords],
             'ingredients': [{'name': ingredient.ingredient_name, 'amount': amount} for ingredient, amount in zip(self.ingredients, self.ingredientAmt.split(','))]
         }
+    
+    def __eq__ (self , user):
+        return self.id == user.id
     
 class Reviews(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -134,7 +147,18 @@ class Collections(db.Model):
     description = db.Column(db.Text, nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     recipes = db.relationship('Recipe', secondary=collection_recipes, lazy='subquery', backref=db.backref('recipes', lazy=True))
-    collection_image = db.Column(db.String(20), nullable=False, default='default.jpg')
+    collection_image = db.Column(db.Text, nullable=False, default='/static/collection_pics/default.jpg')
 
     def __repr__(self):
         return f"Collection '{self.collectionName}' created by '{self.user_id.author}'"
+    
+    def to_dict(self):
+        return {
+            'collection_id': self.id,
+            'collection_name': self.name, 
+            'user_id' : self.user_id,
+            'recipes' : self.recipes
+        }
+
+    def __eq__ (self , user):
+        return self.id == user.id
