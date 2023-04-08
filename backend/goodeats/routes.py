@@ -135,7 +135,8 @@ def update_profile(username):
             current_user.username = form.username.data
             current_user.name = form.name.data
             current_user.email = form.email.data
-            current_user.image_file = data.get('user_image')
+            if(data.get('user_image')):
+                current_user.image_file = data.get('user_image')
             db.session.commit()
             form_data = {
                 'username': current_user.username,
@@ -255,7 +256,8 @@ def update_recipe(recipe_id):
             recipe.cooktime = recipe_form.cooktime.data
             recipe.preptime = recipe_form.preptime.data
             recipe.recipeServings = recipe_form.recipeServings.data
-            recipe.recipe_image = data.get('recipe_image')
+            if(data.get('recipe_image')):
+                recipe.recipe_image = data.get('recipe_image')
 
             recipe.ingredients.clear()
             recipe.keywords.clear()
