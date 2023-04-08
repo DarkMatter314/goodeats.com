@@ -65,7 +65,7 @@ def home():
             'description': recipe.description,
             'rating': recipe.avgRating,
             'recipe_image': url_for('static', filename='recipe_pics/' + recipe.recipe_image),
-            'id': user.id,
+            'id': user.id, 'username': user.username,
             'profile_picture': url_for('static', filename='profile_pics/' + user.image_file)
         })
     return jsonify(recipe_data), 200
