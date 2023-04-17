@@ -65,7 +65,7 @@ def home():
             'description': recipe.description,
             'rating': recipe.avgRating,
             'recipe_image': recipe.recipe_image,
-            'id': user.id, 'username': user.username,
+            'username': user.username,
             'profile_picture': user.image_file
         })
     return jsonify(recipe_data), 200
@@ -101,7 +101,7 @@ def login():
     
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first()
-        if user and user.password==form.password.data:
+        if user and bcrypt.check_password_hash(user.password, form.password.data):
             val = login_user(user, remember=form.remember.data)
             return jsonify({'message': 'You have logged in successfully', 'type':f"{val}"}), 200
         else:
