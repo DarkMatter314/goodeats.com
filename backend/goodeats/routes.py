@@ -334,7 +334,7 @@ def user_recipes(username):
 
 @app.route("/search", methods=['GET'])
 def search():
-    keywords = request.args.get('keywords', '').split(',')
+    keywords = request.args.get('keywords').split(', ')
 
     # Build the query to search for recipes
     name_match = [Recipe.name.ilike('%{}%'.format(keyword.strip())) for keyword in keywords]
