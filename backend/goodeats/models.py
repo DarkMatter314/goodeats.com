@@ -39,6 +39,15 @@ class User(db.Model):
     def get_id(self):
         return f"{id}"
     
+    def to_dict(self):
+        return {
+            'user_id': self.id,
+            'username': self.username,
+            'name': self.name,
+            'email': self.email,
+            'profile_picture': self.image_file
+        }
+    
 recipe_keywords = db.Table('recipe_keywords',
     db.Column('recipe_id', db.Integer, db.ForeignKey('recipe.id'), primary_key=True),
     db.Column('keywords_id', db.Integer, db.ForeignKey('keywords.id'), primary_key=True)
@@ -152,6 +161,9 @@ class Collections(db.Model):
     def __repr__(self):
         return f"Collection '{self.collectionName}' created by '{self.user_id.author}'"
     
+    def __eq__ (self , user):
+        return self.id == user.id
+    
     def to_dict(self):
         return {
             'collection_id': self.id,
@@ -159,6 +171,3 @@ class Collections(db.Model):
             'user_id' : self.user_id,
             'recipes' : self.recipes
         }
-
-    def __eq__ (self , user):
-        return self.id == user.id
