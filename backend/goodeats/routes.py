@@ -341,10 +341,7 @@ def search():
     keyword_match = [Keywords.keyword.ilike('%{}%'.format(keyword.strip())) for keyword in keywords]
     ingredient_match = [Ingredients.ingredient_name.ilike('%{}%'.format(keyword.strip())) for keyword in keywords]
     query = Recipe.query.filter(or_(*name_match)).outerjoin(Recipe.keywords).filter(or_(*keyword_match)
-
-    ).outerjoin(Recipe.ingredients
-    ).filter(or_(*ingredient_match)
-
+    ).outerjoin(Recipe.ingredients).filter(or_(*ingredient_match)
     ).order_by(
     case(
         (Recipe.name.ilike('%{}%'.format(keywords)), 1),
