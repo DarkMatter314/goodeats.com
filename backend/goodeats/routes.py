@@ -129,14 +129,13 @@ def update_profile(username):
     if(current_user != user):
         return jsonify({'message': 'You do not have access to view this link'}), 403
     if request.method == 'POST':
-        data = request.get_json()
-        form = UpdateProfileForm(data=data)
+        form = UpdateProfileForm(data=data, current_user_username = current_user.username, current_user_email = current_user.email)
         if form.validate_on_submit():
             current_user.username = form.username.data
             current_user.name = form.name.data
             current_user.email = form.email.data
             if(data.get('user_image')):
-                current_user.image_file = data.get('user_image')
+                current_user.image_file = data.get('profile_picture')
             db.session.commit()
             form_data = {
                 'username': current_user.username,

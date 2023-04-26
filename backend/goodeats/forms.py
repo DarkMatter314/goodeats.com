@@ -31,15 +31,17 @@ class UpdateProfileForm(FlaskForm):
     email = EmailField('Email', validators=[DataRequired(), Email()])
     profile_picture = TextAreaField('Update Profile Picture')
     submit = SubmitField('Sign Up')
+    current_user_username = StringField('Username', validators=[DataRequired(), Length(min=2, max=100)])
+    current_user_email = EmailField('Email', validators=[DataRequired(), Email()])
 
-    def validate_username(self, username, current_user):
-        if username.data != current_user.username:
+    def validate_username(self, username):
+        if username.data != self.current_user_username:
             user = User.query.filter_by(username=username.data).first()
             if user:
                 raise ValidationError('That username is taken. Please choose a different one.')
 
-    def validate_email(self, email, current_user):
-        if email.data != current_user.email:
+    def validate_email(self, email):
+        if email.data != self.current_user_email:
             user = User.query.filter_by(email=email.data).first()
             if user:
                 raise ValidationError('That email is taken. Please choose a different one.')
@@ -65,5 +67,4 @@ class RecipeForm(FlaskForm):
     recipe_image = TextAreaField('Recipe Picture')
     recipeServings = StringField('Number of servings')
     keywords = FieldList(StringField('Keywords'))
-    # picture = FileField('Recipe Picture', validators=[FileAllowed(['jpg', 'png', 'jpeg'])])
     submit = SubmitField('Post')
