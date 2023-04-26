@@ -19,44 +19,40 @@ def home():
 @app.route("/top_rated", methods=['GET'])
 def top_rated():
     recipes = Recipe.query.order_by(Recipe.avgRating.desc()).paginate(per_page=10)
-    recipe_count = 0
+    recipe_count = Recipe.query.count()
     recipe_data = []
     for recipe in recipes:
         recipe_data.append({'recipe': recipe.to_dict(), 'user': recipe.author.to_dict()})
-        recipe_count += 1
     max_pages = recipe_count/10 if recipe_count%10 == 0 else recipe_count//10 + 1
     return jsonify({'recipe_data':recipe_data, 'max_pages':max_pages}), 200
 
 @app.route("/popular_recipes", methods=['GET'])
 def popular_recipes():
     recipes = Recipe.query.order_by(Recipe.reviewCount.desc()).paginate(per_page=10)
-    recipe_count = 0
+    recipe_count = Recipe.query.count()
     recipe_data = []
     for recipe in recipes:
         recipe_data.append({'recipe': recipe.to_dict(), 'user': recipe.author.to_dict()})
-        recipe_count += 1
     max_pages = recipe_count/10 if recipe_count%10 == 0 else recipe_count//10 + 1
     return jsonify({'recipe_data':recipe_data, 'max_pages':max_pages}), 200
 
 @app.route("/easiest_recipes", methods = ['GET'])
 def easiest_recipes():
     recipes = Recipe.query.order_by(Recipe.cooktime.desc()).paginate(per_page=10)
-    recipe_count = 0
+    recipe_count = Recipe.query.count()
     recipe_data = []
     for recipe in recipes:
         recipe_data.append({'recipe': recipe.to_dict(), 'user': recipe.author.to_dict()})
-        recipe_count += 1
     max_pages = recipe_count/10 if recipe_count%10 == 0 else recipe_count//10 + 1
     return jsonify({'recipe_data':recipe_data, 'max_pages':max_pages}), 200
 
-@app.route("/all_recipes", methods=['GET'])
+@app.route("/latest_recipes", methods=['GET'])
 def all_recipes():
     recipes = Recipe.query.order_by(Recipe.datePublished.desc()).paginate(per_page=10)
-    recipe_count = 0
+    recipe_count = Recipe.query.count()
     recipe_data = []
     for recipe in recipes:
         recipe_data.append({'recipe': recipe.to_dict(), 'user': recipe.author.to_dict()})
-        recipe_count += 1
     max_pages = recipe_count/10 if recipe_count%10 == 0 else recipe_count//10 + 1
     return jsonify({'recipe_data':recipe_data, 'max_pages':max_pages}), 200
 
