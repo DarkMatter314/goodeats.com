@@ -1,6 +1,6 @@
 from datetime import datetime
 from goodeats.database import db
-from flask_login import UserMixin
+# from flask_login import UserMixin
 import random
 
 followers_table = db.Table('Followers',
@@ -8,12 +8,12 @@ followers_table = db.Table('Followers',
     db.Column('following_id', db.Integer, db.ForeignKey('user.id'), primary_key=True)
 )
 
-class User(db.Model , UserMixin):
+class User(db.Model):
     id = db.Column(db.Integer, unique=True, primary_key=True)
     username = db.Column(db.String(100), unique=True, nullable=False)
     name = db.Column(db.String(100), unique=False, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    image_file = db.Column(db.Text, nullable=False, default='/static/profile_pics/default.jpg')
+    image_file = db.Column(db.Text, nullable=False, default='https://w0.peakpx.com/wallpaper/979/89/HD-wallpaper-purple-smile-design-eye-smily-profile-pic-face.jpg')
     password = db.Column(db.String(60), nullable=False)
 
     # Relationships
@@ -81,7 +81,7 @@ class Recipe(db.Model):
     reviewCount = db.Column(db.Integer, nullable=True)
     avgRating = db.Column(db.Integer, nullable=True, default=3.5+random.random())
     recipeServings = db.Column(db.Integer, nullable=True)
-    recipe_image = db.Column(db.Text, nullable=False, default='/static/recipe_pics/default.jpg')
+    recipe_image = db.Column(db.Text, nullable=False, default='https://w7.pngwing.com/pngs/1013/530/png-transparent-cafe-italian-cuisine-breakfast-menu-eat-food-logo-eating-thumbnail.png')
 
     #Relationships
     reviews = db.relationship('Reviews', backref='recipe', lazy=False)

@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_bcrypt import Bcrypt
-from flask_login import LoginManager
+# from flask_login import LoginManager
 from flask_cors import CORS
 from goodeats.database import db
 from goodeats.models import User 
@@ -14,15 +14,15 @@ app.config['WTF_CSRF_ENABLED'] = False
 bcrypt = Bcrypt(app)
 db.init_app(app)
 
-login_manager = LoginManager(app)
+# login_manager = LoginManager(app)
 
-@login_manager.user_loader
-def load_user(id):
-    return User.query.get(id)
+# @login_manager.user_loader
+# def load_user(id):
+#     return User.query.get(id)
 
-login_manager.init_app(app)
+# login_manager.init_app(app)
 
-login_manager.login_view = 'login'
-login_manager.login_message_category = 'info'
+# login_manager.login_view = 'login'
+# login_manager.login_message_category = 'info'
 
 from goodeats import routes
