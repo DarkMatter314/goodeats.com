@@ -55,20 +55,51 @@ def not_found_error(error):
 @app.route("/", methods=['GET'])
 @app.route("/home", methods=['GET'])
 def home():
-    recipes = Recipe.query.order_by(Recipe.datePublished.desc()).paginate(per_page=10)
+    return jsonify({'message': 'Welcome to Good Eats!'}), 200
+
+@app.route("/top_rated", methods=['GET'])
+def top_rated():
+    recipes = Recipe.query.order_by(Recipe.avgRating.desc()).paginate(per_page=10)
+    recipe_count = recipes.length()
+    max_pages = recipe_count/10 if recipe_count%10 == 0 else recipe_count//10 + 1
     recipe_data = []
     for recipe in recipes:
         user = recipe.author
-        recipe_data.append({
-            'recipe_id': recipe.id,
-            'name': recipe.name,
-            'description': recipe.description,
-            'rating': recipe.avgRating,
-            'recipe_image': recipe.recipe_image,
-            'username': user.username,
-            'profile_picture': user.image_file
-        })
-    return jsonify(recipe_data), 200
+        recipe_data.append({recipe.to_dict()})
+    return jsonify({'recipe_data':recipe_data, 'max_pages':max_pages}), 200
+
+@app.route("/popular_recipes", methods=['GET'])
+def popular_recipes():
+    recipes = Recipe.query.order_by(Recipe.reviewCount.desc()).paginate(per_page=10)
+    recipe_count = recipes.length()
+    max_pages = recipe_count/10 if recipe_count%10 == 0 else recipe_count//10 + 1
+    recipe_data = []
+    for recipe in recipes:
+        user = recipe.author
+        recipe_data.append({recipe.to_dict()})
+    return jsonify({'recipe_data':recipe_data, 'max_pages':max_pages}), 200
+
+@app.route("/easiest_recipes", methods = ['GET'])
+def easiest_recipes():
+    recipes = Recipe.query.order_by(Recipe.cooktime.desc()).paginate(per_page=10)
+    recipe_count = recipes.length()
+    max_pages = recipe_count/10 if recipe_count%10 == 0 else recipe_count//10 + 1
+    recipe_data = []
+    for recipe in recipes:
+        user = recipe.author
+        recipe_data.append({recipe.to_dict()})
+    return jsonify({'recipe_data':recipe_data, 'max_pages':max_pages}), 200
+
+@app.route("/all_recipes", methods=['GET'])
+def all_recipes():
+    recipes = Recipe.query.order_by(Recipe.datePublished.desc()).paginate(per_page=10)
+    recipe_count = recipes.length()
+    max_pages = recipe_count/10 if recipe_count%10 == 0 else recipe_count//10 + 1
+    recipe_data = []
+    for recipe in recipes:
+        user = recipe.author
+        recipe_data.append(recipe.to_dict())
+    return jsonify({'recipe_data':recipe_data, 'max_pages':max_pages}), 200
 
 @app.route("/register", methods=['GET', 'POST'])
 def register():
@@ -357,6 +388,8 @@ def search():
 
     # Execute the query and return the results
     results = query.all()
+    recipe_count = results.length()
+    max_pages = recipe_count/10 if recipe_count%10 == 0 else recipe_count//10 + 1
     response_body = []
     for recipe in results:
         user = recipe.author
@@ -365,7 +398,7 @@ def search():
         recipe_dict['username'] = user.username
         recipe_dict['profile_pic'] = user.image_file
         response_body.append(recipe_dict)
-    return jsonify(response_body)
+    return jsonify({'recipe_data':response_body, 'max_pages': max_pages})
 
 @app.route("/recipe/<int:recipe_id>/reviews", methods=['GET', 'POST'])
 def get_reviews(recipe_id):
