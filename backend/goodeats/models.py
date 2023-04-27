@@ -88,7 +88,7 @@ class Recipe(db.Model):
     cooktime = db.Column(db.String(20), nullable=True)
     preptime = db.Column(db.String(20), nullable=True)
     reviewCount = db.Column(db.Integer, nullable=True, default=0)
-    avgRating = db.Column(db.Integer, nullable=True, default=3.5+random.random())
+    avgRating = db.Column(db.Integer, nullable=True, default=0)
     recipeServings = db.Column(db.Integer, nullable=True)
     recipe_image = db.Column(db.Text, nullable=False, default='https://w7.pngwing.com/pngs/1013/530/png-transparent-cafe-italian-cuisine-breakfast-menu-eat-food-logo-eating-thumbnail.png')
 
@@ -111,7 +111,7 @@ class Recipe(db.Model):
             'description': self.description, 
             'datePublished': self.datePublished,
             'reviewCount': self.reviewCount, 
-            'avgRating': self.avgRating,
+            'avgRating': round(self.avgRating,2),
             'cooktime': self.cooktime,
             'preptime' : self.preptime,
             'recipeServings' : self.recipeServings,
