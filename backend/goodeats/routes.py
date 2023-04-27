@@ -3,7 +3,7 @@ from flask import request, jsonify
 from goodeats import app, db, bcrypt
 from goodeats.forms import RegistrationForm, LoginForm, UpdateProfileForm, RecipeForm,  IngredientForm
 from goodeats.models import User, Keywords, Ingredients, Recipe, Collections, Reviews
-from sqlalchemy import or_, case
+from sqlalchemy import or_, case, and_
 
 @app.errorhandler(404)
 def not_found_error(error):
@@ -295,16 +295,16 @@ def search():
     # Build the query to search for recipes
     name_match = []#[Recipe.name.ilike('%{}%'.format(keyword.strip())) for keyword in keywords]
     keyword_match = [Keywords.keyword.ilike('%{}%'.format(keyword.strip())) for keyword in keywords]
-    ingredient_match = []#[Ingredients.ingredient_name.ilike('%{}%'.format(keyword.strip())) for keyword in keywords]
-    query = Recipe.query.filter(or_(*name_match)).outerjoin(Recipe.keywords).filter(or_(*keyword_match)
-    ).outerjoin(Recipe.ingredients).filter(or_(*ingredient_match)
+    ingredient_match =[]# [Ingredients.ingredient_name.ilike('%{}%'.format(keyword.strip())) for keyword in keywords]
+    query = Recipe.query.filter(and_(*name_match)).outerjoin(Recipe.keywords).filter(and_(*keyword_match)
+    ).outerjoin(Recipe.ingredients).filter(and_(*ingredient_match)
     ).order_by(
     case(
         (Recipe.name.ilike('%{}%'.format(keywords)), 1),
         (Keywords.keyword.ilike('%{}%'.format(keywords)), 1),
         (Ingredients.ingredient_name.ilike('%{}%'.format(keywords)), 3),
         else_=4
-    ))                                                                                                 `
+    ))                                                                                                 
     results = query.all()
 
     # Execute the query and return the results
