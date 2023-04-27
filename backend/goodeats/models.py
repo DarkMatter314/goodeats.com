@@ -155,7 +155,7 @@ class Collections(db.Model):
     description = db.Column(db.Text, nullable=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     recipes = db.relationship('Recipe', secondary=collection_recipes, lazy='subquery', backref=db.backref('recipes', lazy=True))
-    collection_image = db.Column(db.Text, nullable=False, default='https://imgur.com/a/OOfIu7o')
+    collection_image = db.Column(db.Text, nullable=False, default='https://i.imgur.com/Kd2qaRH.jpeg')
 
     def __repr__(self):
         return f"Collection '{self.collectionName}' created by '{self.user_id.author}'"
