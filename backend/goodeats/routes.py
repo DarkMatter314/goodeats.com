@@ -308,7 +308,7 @@ def search():
 
     # Execute the query and return the results
     results = query.all()
-    recipe_count = results.length()
+    recipe_count = results.count()
     max_pages = recipe_count/10 if recipe_count%10 == 0 else recipe_count//10 + 1
     recipe_data = []
     for recipe in results:
