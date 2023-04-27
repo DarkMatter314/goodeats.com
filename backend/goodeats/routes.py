@@ -97,9 +97,10 @@ def register():
     if form.validate_on_submit():
         hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
         user = User(username=form.username.data, name=form.name.data, email=form.email.data, password=hashed_password, image_file=form.profile_picture.data)
+        response = recommend.add_user(user)
         db.session.add(user)
         db.session.commit()
-        return jsonify({'message': 'Your account has been created! You are now able to log in'}), 200
+        return jsonify({'message': 'Your account has been created! You are now able to log in', 'user_id': user.id}), response
     else:
         return jsonify(form.errors), 400
 
@@ -211,9 +212,10 @@ def new_recipe():
                 db.session.commit()
                 recipe.keywords.append(new_keyword)
 
+        response = recommend.add_recipe(recipe, current_user)
         db.session.add(recipe)
         db.session.commit()
-        return jsonify({'recipe_data': recipe.to_dict(), 'user_data': current_user.to_dict()}), 200
+        return jsonify({'recipe_data': recipe.to_dict(), 'user_data': current_user.to_dict()}), response
     
     else:
         return jsonify(recipe_form.errors), 400
@@ -332,7 +334,7 @@ def user_recipes(username):
 @app.route("/search", methods=['GET'])
 def search():
     keywords = request.args.get('keywords').split(',')
-
+    page = request.args.get('page', 1, type=int)
     # Build the query to search for recipes
     name_match = []#[Recipe.name.ilike('%{}%'.format(keyword.strip())) for keyword in keywords]
     keyword_match = [Keywords.keyword.ilike('%{}%'.format(keyword.strip())) for keyword in keywords]
@@ -347,7 +349,7 @@ def search():
         else_=4
     ))                                                                                                 
     results = query.all()
-
+    
     # Execute the query and return the results
     
     recipe_count = len(list(results))

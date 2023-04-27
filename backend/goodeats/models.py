@@ -140,7 +140,8 @@ class Reviews(db.Model):
             'datePosted': self.datePosted,
             'reviewText': self.reviewText,
             'reviewLikes': self.reviewLikes,
-            'user_id': self.user_id
+            'user_id': self.user_id,
+            'username': self.author.username
         }
 
 collection_recipes = db.Table('collection_recipes',
@@ -165,7 +166,7 @@ class Collections(db.Model):
     def to_dict(self):
         return {
             'collection_id': self.id,
-            'collection_name': self.name, 
+            'collection_name': self.collectionName, 
             'user_id' : self.user_id,
             'recipes' : self.recipes
         }
