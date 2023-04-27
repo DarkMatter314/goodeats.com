@@ -431,8 +431,8 @@ def collections(username):
         if(current_user != user):
             return jsonify({'message': 'You do not have access to view this link'}), 403
         data = request.get_json()
-        collection_image = data.get('collection_image')
-        new_collection = Collections(collectionName=data.get('name'), user_id=user.id, recipes=[], description=data.get('description'), collection_image=collection_image)
+        
+        new_collection = Collections(collectionName=data.get('name'), user_id=user.id, recipes=[], description=data.get('description'))
         db.session.add(new_collection)
         db.session.commit()
         return jsonify(new_collection.to_dict()), 200
@@ -468,6 +468,7 @@ def addtoCollection(recipe_id):
     if(collection.author != current_user):
         return jsonify({'message': 'You do not have access to view this link'}), 403
     collection.recipes.append(recipe)
+    collection.collection_image = recipe.recipe_image
     response = recommend.add_bookmark(current_user.id, recipe_id)
     db.session.commit()
     return jsonify({'message': 'Successfully added recipe!'}), response
