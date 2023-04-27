@@ -70,7 +70,8 @@ class RecipeForm(FlaskForm):
     submit = SubmitField('Post')
 
     def validate_servings(self):
-        try(int(self.recipeServings.data)):
+        try:
+            int(self.recipeServings.data)
             return 0
         except:
             raise ValidationError('Recipe Servings must be an integer')
