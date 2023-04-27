@@ -381,16 +381,20 @@ def delete_review(recipe_id):
 
 @app.route("/<username>/collections", methods=['GET', 'POST'])
 def collections(username):
-    data = request.get_json()
-    user_id = data.get('user_id')
-    current_user = User.query.get_or_404(user_id) if user_id else None
     user = User.query.filter_by(username=username).first_or_404()
+    
     if(request.method == 'POST'):
-        if(current_user != user):
+        data = request.get_json()
+        user_id = data.get('user_id')
+        current_user = User.query.get_or_404(user_id) if user_id else None
+
+        if(current_user == None):
+            return jsonify({'message': 'could not find your user ID'}),399
+        if( current_user != user):
             return jsonify({'message': 'You do not have access to view this link'}), 403
         data = request.get_json()
         collection_image = data.get('collection_image')
-        new_collection = Collections(name=data.get('name'), user_id=user.id, recipes=[], collection_image=collection_image)
+        new_collection = Collections(collectionName=data.get('name'), user_id=user.id, recipes=[], description=data.get('description'))
         db.session.add(new_collection)
         db.session.commit()
         return jsonify(new_collection.to_dict()), 200
@@ -402,7 +406,7 @@ def collections(username):
             collection_list.append(collection.to_dict())
         return jsonify(collection_list), 200
     else:
-        return jsonify({'message': 'HTTP Bad Request'}), 400
+        return jsonify({'message': 'HTTP Bad Request'}), 401
     
 @app.route("/<username>/collections/<int:collection_id>", methods=['GET'])
 def collection_recipes(username, collection_id):
