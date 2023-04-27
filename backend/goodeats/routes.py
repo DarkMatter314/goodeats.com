@@ -100,7 +100,7 @@ def register():
         db.session.add(user)
         db.session.commit()
         response = recommend.add_user(user)
-        return jsonify({'message': 'Your account has been created! You are now able to log in', 'user_id': user.id}), response
+        return jsonify({'message': 'Your account has been created! You are now able to log in', 'user_id': user.id}), 200
     else:
         return jsonify(form.errors), 400
 
@@ -215,7 +215,7 @@ def new_recipe():
         db.session.add(recipe)
         db.session.commit()
         response = recommend.add_recipe(recipe, current_user)
-        return jsonify({'recipe_data': recipe.to_dict(), 'user_data': current_user.to_dict()}), response
+        return jsonify({'recipe_data': recipe.to_dict(), 'user_data': current_user.to_dict()}), 200
     
     else:
         return jsonify(recipe_form.errors), 400
@@ -390,7 +390,7 @@ def add_review(recipe_id):
     response = recommend.add_rating(current_user.id, recipe_id, data.get('rating'))
     db.session.add(review)
     db.session.commit()
-    return jsonify(review.to_dict()), response
+    return jsonify(review.to_dict()), 200
 
 @app.route("/recipe/<int:recipe_id>/reviews/like", methods=['POST'])
 # @login_required
@@ -474,7 +474,7 @@ def addtoCollection(recipe_id):
     collection.collection_image = recipe.recipe_image
     response = recommend.add_bookmark(current_user.id, recipe_id)
     db.session.commit()
-    return jsonify({'message': 'Successfully added recipe!'}), response
+    return jsonify({'message': 'Successfully added recipe!'}), 200
 
 @app.route("/<username>/collections/<int:collection_id>/delete", methods=['POST'])
 # @login_required
