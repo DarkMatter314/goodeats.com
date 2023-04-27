@@ -97,9 +97,9 @@ def register():
     if form.validate_on_submit():
         hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
         user = User(username=form.username.data, name=form.name.data, email=form.email.data, password=hashed_password, image_file=form.profile_picture.data)
-        response = recommend.add_user(user)
         db.session.add(user)
         db.session.commit()
+        response = recommend.add_user(user)
         return jsonify({'message': 'Your account has been created! You are now able to log in', 'user_id': user.id}), response
     else:
         return jsonify(form.errors), 400
@@ -212,9 +212,9 @@ def new_recipe():
                 db.session.commit()
                 recipe.keywords.append(new_keyword)
 
-        response = recommend.add_recipe(recipe, current_user)
         db.session.add(recipe)
         db.session.commit()
+        response = recommend.add_recipe(recipe, current_user)
         return jsonify({'recipe_data': recipe.to_dict(), 'user_data': current_user.to_dict()}), response
     
     else:
