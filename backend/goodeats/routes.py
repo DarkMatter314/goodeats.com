@@ -296,8 +296,8 @@ def search():
     name_match = []#[Recipe.name.ilike('%{}%'.format(keyword.strip())) for keyword in keywords]
     keyword_match = [Keywords.keyword.ilike('%{}%'.format(keyword.strip())) for keyword in keywords]
     ingredient_match =[]# [Ingredients.ingredient_name.ilike('%{}%'.format(keyword.strip())) for keyword in keywords]
-    query = Recipe.query.filter(and_(*name_match)).outerjoin(Recipe.keywords).filter(and_(*keyword_match)
-    ).outerjoin(Recipe.ingredients).filter(and_(*ingredient_match)
+    query = Recipe.query.filter(or_(*name_match)).outerjoin(Recipe.keywords).filter(or_(*keyword_match)
+    ).outerjoin(Recipe.ingredients).filter(or_(*ingredient_match)
     ).order_by(
     case(
         (Recipe.name.ilike('%{}%'.format(keywords)), 1),
@@ -309,7 +309,7 @@ def search():
 
     # Execute the query and return the results
     
-    recipe_count = results.count()
+    recipe_count = len(list(results))
     max_pages = (recipe_count//10) if (recipe_count%10 == 0) else (recipe_count//10 + 1)
     recipe_data = []
     for recipe in results:
