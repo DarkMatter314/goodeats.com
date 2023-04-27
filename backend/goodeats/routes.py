@@ -97,10 +97,10 @@ def register():
     if form.validate_on_submit():
         hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
         user = User(username=form.username.data, name=form.name.data, email=form.email.data, password=hashed_password, image_file=form.profile_picture.data)
-        response = recommend.add_user(user)
         db.session.add(user)
         db.session.commit()
-        return jsonify({'message': 'Your account has been created! You are now able to log in', 'user_id': user.id}), response
+        response = recommend.add_user(user)
+        return jsonify({'message': 'Your account has been created! You are now able to log in', 'user_id': user.id}), 200
     else:
         return jsonify(form.errors), 400
 
@@ -212,10 +212,10 @@ def new_recipe():
                 db.session.commit()
                 recipe.keywords.append(new_keyword)
 
-        response = recommend.add_recipe(recipe, current_user)
         db.session.add(recipe)
         db.session.commit()
-        return jsonify({'recipe_data': recipe.to_dict(), 'user_data': current_user.to_dict()}), response
+        response = recommend.add_recipe(recipe, current_user)
+        return jsonify({'recipe_data': recipe.to_dict(), 'user_data': current_user.to_dict()}), 200
     
     else:
         return jsonify(recipe_form.errors), 400
@@ -370,7 +370,8 @@ def get_reviews(recipe_id):
     other_reviews = []
     for review in review_list:
         if current_user is not None:
-            if current_user == review.author:
+            review_user = User.query.get(review.user_id)
+            if (review_user is not None) and (current_user == review_user):
                 user_reviews.append(review)
             else:
                 other_reviews.append(review)
@@ -393,7 +394,7 @@ def add_review(recipe_id):
     recipe.avgRating = (recipe_rating * recipe_count + data.get('rating'))/(recipe_count + 1)
     recipe.reviewCount = recipe_count + 1
     db.session.commit()
-    return jsonify(review.to_dict()), response
+    return jsonify(review.to_dict()), 200
 
 @app.route("/recipe/<int:recipe_id>/reviews/like", methods=['POST'])
 # @login_required
@@ -481,7 +482,7 @@ def addtoCollection(recipe_id):
     collection.collection_image = recipe.recipe_image
     response = recommend.add_bookmark(current_user.id, recipe_id)
     db.session.commit()
-    return jsonify({'message': 'Successfully added recipe!'}), response
+    return jsonify({'message': 'Successfully added recipe!'}), 200
 
 @app.route("/<username>/collections/<int:collection_id>/delete", methods=['POST'])
 # @login_required
