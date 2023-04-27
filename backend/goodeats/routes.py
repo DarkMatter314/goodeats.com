@@ -389,6 +389,10 @@ def add_review(recipe_id):
     review = Reviews(rating=data.get('rating'), reviewText = data.get('review_text'), recipe_id=recipe_id , user_id = current_user.id)
     response = recommend.add_rating(current_user.id, recipe_id, data.get('rating'))
     db.session.add(review)
+    recipe_rating = recipe.avgRating
+    recipe_count = recipe.reviewCount
+    recipe.avgRating = (recipe_rating * recipe_count + data.get('rating'))/(recipe_count + 1)
+    recipe.reviewCount = recipe_count + 1
     db.session.commit()
     return jsonify(review.to_dict()), 200
 
@@ -421,6 +425,10 @@ def delete_review(recipe_id):
     if(review.author != current_user):
         return jsonify({'message': 'You do not have access to delete this review'}), 403
     db.session.delete(review)
+    recipe_rating = recipe.avgRating
+    recipe_count = recipe.reviewCount
+    recipe.avgRating = (recipe_rating * recipe_count - data.get('rating'))/(recipe_count - 1)
+    recipe.reviewCount = recipe_count - 1  
     db.session.commit()
     return jsonify({'message': 'Review deleted successfully.'}), 200
 
