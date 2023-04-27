@@ -370,7 +370,8 @@ def get_reviews(recipe_id):
     other_reviews = []
     for review in review_list:
         if current_user is not None:
-            if current_user == review.author:
+            review_user = User.query.get(review.user_id)
+            if (review_user is not None) and (current_user == review_user):
                 user_reviews.append(review)
             else:
                 other_reviews.append(review)
