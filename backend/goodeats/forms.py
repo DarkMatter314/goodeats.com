@@ -68,3 +68,9 @@ class RecipeForm(FlaskForm):
     recipeServings = StringField('Number of servings')
     keywords = FieldList(StringField('Keywords'))
     submit = SubmitField('Post')
+
+    def validate_servings(self):
+        try(int(self.recipeServings.data)):
+            return 0
+        except:
+            raise ValidationError('Recipe Servings must be an integer')

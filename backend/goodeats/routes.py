@@ -159,7 +159,7 @@ def new_recipe():
     if recipe_form.validate_on_submit():
         recipe = Recipe(name=recipe_form.name.data, author=current_user, instructions=recipe_form.instructions.data, 
                         description=recipe_form.description.data, ingredientAmt=", ".join(ingredients_list), 
-                        cooktime=recipe_form.cooktime.data, preptime=recipe_form.preptime.data, recipeServings=recipe_form.recipeServings.data,
+                        cooktime=recipe_form.cooktime.data, preptime=recipe_form.preptime.data, recipeServings=int(recipe_form.recipeServings.data),
                         recipe_image=recipe_form.recipe_image.data)
         
         for ingredient_form in ing:
