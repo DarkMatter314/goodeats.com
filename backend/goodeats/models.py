@@ -122,9 +122,6 @@ class Recipe(db.Model):
             'ingredients': [{'name': ingredient.ingredient_name, 'amount': amount} for ingredient, amount in zip(self.ingredients, self.ingredientAmt.split(','))]
         }
     
-    def __eq__ (self , user):
-        return self.id == user.id
-    
 class Reviews(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     datePosted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
