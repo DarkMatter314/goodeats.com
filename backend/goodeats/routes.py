@@ -4,7 +4,7 @@ from goodeats import app, db, bcrypt
 from goodeats.forms import RegistrationForm, LoginForm, UpdateProfileForm, RecipeForm,  IngredientForm
 from goodeats.models import User, Keywords, Ingredients, Recipe, Collections, Reviews
 from sqlalchemy import or_, case, and_
-import recommend
+import goodeats.recommend as recommend
 
 @app.errorhandler(404)
 def not_found_error(error):
@@ -71,7 +71,7 @@ def recommend_recipes():
         recipe_list.append({'recipe': recipe.to_dict(), 'user': recipe.author.to_dict()})
     return jsonify({'recipe_data':recipe_list}), 200
 
-@app.route("recommend_users", methods=['GET', 'POST'])
+@app.route("/recommend_users", methods=['GET', 'POST'])
 def recommend_users():
     data = request.get_json()
     user_id = data.get('user_id')
@@ -225,7 +225,7 @@ def recipe(recipe_id):
     return jsonify({'recipe_data': recipe.to_dict(), 'user_data': user.to_dict()}), 200
 
 @app.route("/recipe/<int:recipe_id>", methods=['POST'])
-def recipe(recipe_id):
+def recipe_loggedin(recipe_id):
     recipe = Recipe.query.get_or_404(recipe_id)
     data = request.get_json()
     user_id = data.get('user_id')
@@ -424,19 +424,15 @@ def delete_review(recipe_id):
 @app.route("/<username>/collections", methods=['GET', 'POST'])
 def collections(username):
     user = User.query.filter_by(username=username).first_or_404()
-    
     if(request.method == 'POST'):
         data = request.get_json()
         user_id = data.get('user_id')
-        current_user = User.query.get_or_404(user_id) if user_id else None
-
-        if(current_user == None):
-            return jsonify({'message': 'could not find your user ID'}),399
-        if( current_user != user):
+        current_user = User.query.get_or_404(user_id)
+        if(current_user != user):
             return jsonify({'message': 'You do not have access to view this link'}), 403
         data = request.get_json()
         collection_image = data.get('collection_image')
-        new_collection = Collections(collectionName=data.get('name'), user_id=user.id, recipes=[], description=data.get('description'))
+        new_collection = Collections(collectionName=data.get('name'), user_id=user.id, recipes=[], description=data.get('description'), collection_image=collection_image)
         db.session.add(new_collection)
         db.session.commit()
         return jsonify(new_collection.to_dict()), 200
