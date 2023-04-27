@@ -60,7 +60,7 @@ def all_recipes():
 def register():
     data = request.get_json()
     user_id = data.get('user_id')
-    if(user_id != None):
+    if(user_id is not None):
         return jsonify({'message': 'You are already logged in!'}), 200
     form = RegistrationForm(username=data.get('username'), name=data.get('name'), email=data.get('email'), 
                             password=data.get('password'), confirm_password=data.get('confirm_password'),
@@ -80,7 +80,7 @@ def login():
     # Check if user is already logged in
     data = request.get_json()
     user_id = data.get('user_id')
-    if(user_id != None):
+    if(user_id is not None):
         return jsonify({'message': 'You are already logged in.'}), 200
     
     # Parse the data
@@ -108,7 +108,7 @@ def profile(username):
 # @login_required
 def update_profile(username):
     data = request.get_json()
-    current_user = User.get_or_404(data.get('user_id'))
+    current_user = User.query.get_or_404(data.get('user_id'))
     user = User.query.filter_by(username=username).first_or_404()
     if(current_user != user):
         return jsonify({'message': 'You do not have access to view this link'}), 403
@@ -133,7 +133,7 @@ def update_profile(username):
 # @login_required
 def deleteUser(username):
     data = request.get_json()
-    current_user = User.get_or_404(data.get('user_id'))
+    current_user = User.query.get_or_404(data.get('user_id'))
     user = User.query.filter_by(username=username).first_or_404()
     if(current_user != user):
         return jsonify({'message': 'You do not have access to view this link'}), 403
@@ -145,7 +145,7 @@ def deleteUser(username):
 # @login_required
 def new_recipe():
     data = request.get_json()
-    current_user = User.get_or_404(data.get('user_id'))
+    current_user = User.query.get_or_404(data.get('user_id'))
     ingredients_list = [] 
     ing = []
     keywords=[]
@@ -199,7 +199,7 @@ def recipe(recipe_id):
 # @login_required
 def update_recipe(recipe_id):
     data = request.get_json()
-    current_user = User.get_or_404(data.get('user_id'))
+    current_user = User.query.get_or_404(data.get('user_id'))
     recipe = Recipe.query.get_or_404(recipe_id)
     if recipe.author != current_user:
         return jsonify({'message': 'You do not have access to view this link'}), 403
@@ -269,7 +269,7 @@ def update_recipe(recipe_id):
 # @login_required
 def delete_recipe(recipe_id):
     data = request.get_json()
-    current_user = User.get_or_404(data.get('user_id'))
+    current_user = User.query.get_or_404(data.get('user_id'))
     recipe = Recipe.query.get_or_404(recipe_id)
     if recipe.author != current_user:
         return jsonify({'message': 'You do not have access to view this link'}), 403
@@ -320,13 +320,13 @@ def search():
 def get_reviews(recipe_id):
     data = request.get_json()
     user_id = data.get('user_id')
-    current_user = User.get_or_404(user_id) if user_id else None
+    current_user = User.query.get_or_404(user_id) if user_id else None
     recipe = Recipe.query.get_or_404(recipe_id)
     review_list = recipe.reviews
     user_reviews = [] 
     other_reviews = []
     for review in review_list:
-        if current_user != None:
+        if current_user is not None:
             if current_user == review.author:
                 user_reviews.append(review)
             else:
@@ -340,7 +340,7 @@ def get_reviews(recipe_id):
 # @login_required
 def add_review(recipe_id):
     data = request.get_json()
-    current_user = User.get_or_404(data.get('user_id'))
+    current_user = User.query.get_or_404(data.get('user_id'))
     recipe = Recipe.query.get_or_404(recipe_id)
     review = Reviews(rating=data.get('rating'), reviewText = data.get('review_text'), recipe_id=recipe_id , user_id = current_user.id)
     db.session.add(review)
@@ -351,7 +351,7 @@ def add_review(recipe_id):
 # @login_required
 def change_review_like(recipe_id):
     data = request.get_json()
-    current_user = User.get_or_404(data.get('user_id'))
+    current_user = User.query.get_or_404(data.get('user_id'))
     recipe = Recipe.query.get_or_404(recipe_id)
     review_id = data.get('review_id')
     review = Reviews.query.get_or_404(review_id)
@@ -369,7 +369,7 @@ def change_review_like(recipe_id):
 # @login_required
 def delete_review(recipe_id):
     data = request.get_json()
-    current_user = User.get_or_404(data.get('user_id'))
+    current_user = User.query.get_or_404(data.get('user_id'))
     recipe = Recipe.query.get_or_404(recipe_id)
     review_id = data.get('review_id')
     review = Reviews.query.get_or_404(review_id)
@@ -383,7 +383,7 @@ def delete_review(recipe_id):
 def collections(username):
     data = request.get_json()
     user_id = data.get('user_id')
-    current_user = User.get_or_404(user_id) if user_id else None
+    current_user = User.query.get_or_404(user_id) if user_id else None
     user = User.query.filter_by(username=username).first_or_404()
     if(request.method == 'POST'):
         if(current_user != user):
@@ -419,7 +419,7 @@ def collection_recipes(username, collection_id):
 # @login_required
 def addtoCollection(recipe_id):
     data = request.get_json()
-    current_user = User.get_or_404(data.get('user_id'))
+    current_user = User.query.get_or_404(data.get('user_id'))
     recipe = Recipe.query.get_or_404(recipe_id)
     collection_id = data.get('collection_id')
     collection = Collections.query.get_or_404(collection_id)
@@ -433,7 +433,7 @@ def addtoCollection(recipe_id):
 # @login_required
 def delete_collection(username, collection_id):
     data = request.get_json()
-    current_user = User.get_or_404(data.get('user_id'))
+    current_user = User.query.get_or_404(data.get('user_id'))
     user = User.query.filter_by(username=username).first_or_404()
     collection = Collections.query.get_or_404(collection_id)
     if collection.author != current_user:
@@ -446,7 +446,7 @@ def delete_collection(username, collection_id):
 # @login_required
 def get_following(username):
     data = request.get_json()
-    current_user = User.get_or_404(data.get('user_id'))
+    current_user = User.query.get_or_404(data.get('user_id'))
     user = User.query.filter_by(username=username).first_or_404()
     if(current_user != user):
         return jsonify({'message': 'You do not have access to view this link'}), 403
@@ -471,7 +471,7 @@ def get_following(username):
 # @login_required
 def change_following(recipe_id):
     data = request.get_json()
-    current_user = User.get_or_404(data.get('user_id'))
+    current_user = User.query.get_or_404(data.get('user_id'))
     recipe = Recipe.query.get_or_404(recipe_id)
     author = recipe.author
     if current_user.id == author.id:
@@ -489,7 +489,7 @@ def change_following(recipe_id):
 # @login_required
 def follow_user(username):
     data = request.get_json()
-    current_user = User.get_or_404(data.get('user_id'))
+    current_user = User.query.get_or_404(data.get('user_id'))
     user = User.query.filter_by(username=username).first_or_404()
 
     if current_user == user:
