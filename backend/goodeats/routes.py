@@ -304,7 +304,7 @@ def search():
         (Keywords.keyword.ilike('%{}%'.format(keywords)), 1),
         (Ingredients.ingredient_name.ilike('%{}%'.format(keywords)), 3),
         else_=4
-    ))                                                                                                 `
+    ))                                                                                                 
     results = query.all()
 
     # Execute the query and return the results
