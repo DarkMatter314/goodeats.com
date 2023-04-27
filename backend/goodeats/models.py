@@ -60,7 +60,7 @@ recipe_ingredients = db.Table('recipe_ingredients',
     
 class Keywords(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    keyword = db.Column(db.String(100), nullable=False)
+    keyword = db.Column(db.String(500), nullable=False)
 
     def __repr__(self):
         return f"Keyword: '{self.keyword}'"
