@@ -431,8 +431,9 @@ def collections(username):
         if(current_user != user):
             return jsonify({'message': 'You do not have access to view this link'}), 403
         data = request.get_json()
-        collection_image = data.get('collection_image')
-        new_collection = Collections(name=data.get('name'), user_id=user.id, recipes=[], collection_image=collection_image)
+        # collection_image = data.get('collection_image')
+        image = Collections.recipes.first().recipe_image
+        new_collection = Collections(name=data.get('name'), user_id=user.id, recipes=[], collection_image=image)
         db.session.add(new_collection)
         db.session.commit()
         return jsonify(new_collection.to_dict()), 200
