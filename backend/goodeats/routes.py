@@ -309,8 +309,8 @@ def search():
 
     # Execute the query and return the results
     
-    recipe_count = len(list(results)) #query.count();
-    max_pages = (recipe_count//10) if (recipe_count%10 == 0) else (recipe_count//10 + 1);
+    recipe_count = results.count()
+    max_pages = (recipe_count//10) if (recipe_count%10 == 0) else (recipe_count//10 + 1)
     recipe_data = []
     for recipe in results:
         recipe_data.append({'recipe': recipe.to_dict(), 'user': recipe.author.to_dict()})
