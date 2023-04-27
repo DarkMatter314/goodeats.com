@@ -4,6 +4,7 @@ from goodeats import app, db, bcrypt
 from goodeats.forms import RegistrationForm, LoginForm, UpdateProfileForm, RecipeForm,  IngredientForm
 from goodeats.models import User, Keywords, Ingredients, Recipe, Collections, Reviews
 from sqlalchemy import or_, case, and_
+import recommend
 
 @app.errorhandler(404)
 def not_found_error(error):
@@ -55,6 +56,34 @@ def all_recipes():
         recipe_data.append({'recipe': recipe.to_dict(), 'user': recipe.author.to_dict()})
     max_pages = recipe_count/10 if recipe_count%10 == 0 else recipe_count//10 + 1
     return jsonify({'recipe_data':recipe_data, 'max_pages':max_pages}), 200
+
+@app.route("/recommend_recipes", methods=['GET', 'POST'])
+def recommend_recipes():
+    data = request.get_json()
+    user_id = data.get('user_id')
+    if(user_id is None):
+        return jsonify({'message': 'Error'}), 400
+    user = User.query.get_or_404(user_id)
+    recipe_ids = recommend.recipe_user(user_id)
+    recipe_list = []
+    for id in recipe_ids:
+        recipe = Recipe.query.get_or_404(id)
+        recipe_list.append({'recipe': recipe.to_dict(), 'user': recipe.author.to_dict()})
+    return jsonify({'recipe_data':recipe_list}), 200
+
+@app.route("recommend_users", methods=['GET', 'POST'])
+def recommend_users():
+    data = request.get_json()
+    user_id = data.get('user_id')
+    if(user_id is None):
+        return jsonify({'message': 'Error'}), 400
+    user = User.query.get_or_404(user_id)
+    user_ids = recommend.user_user(user_id)
+    user_list = []
+    for id in user_ids:
+        user = User.query.get_or_404(id)
+        user_list.append(user.to_dict())
+    return jsonify({'user_data':user_list}), 200
 
 @app.route("/register", methods=['GET', 'POST'])
 def register():
@@ -160,7 +189,7 @@ def new_recipe():
         recipe = Recipe(name=recipe_form.name.data, author=current_user, instructions=recipe_form.instructions.data, 
                         description=recipe_form.description.data, ingredientAmt=", ".join(ingredients_list), 
                         cooktime=recipe_form.cooktime.data, preptime=recipe_form.preptime.data, recipeServings=int(recipe_form.recipeServings.data),
-                        recipe_image=recipe_form.recipe_image.data)
+                        recipe_image=recipe_form.recipe_image.data, )
         
         for ingredient_form in ing:
             name = ingredient_form.ingredient_name.data
@@ -193,6 +222,18 @@ def new_recipe():
 def recipe(recipe_id):
     recipe = Recipe.query.get_or_404(recipe_id)
     user = recipe.author
+    return jsonify({'recipe_data': recipe.to_dict(), 'user_data': user.to_dict()}), 200
+
+@app.route("/recipe/<int:recipe_id>", methods=['POST'])
+def recipe(recipe_id):
+    recipe = Recipe.query.get_or_404(recipe_id)
+    data = request.get_json()
+    user_id = data.get('user_id')
+    if(user_id is None):
+        return jsonify({'message': 'Error'}), 400
+    current_user = User.query.get_or_404(user_id)
+    user = recipe.author
+    response = recommend.add_view(user_id, recipe_id)
     return jsonify({'recipe_data': recipe.to_dict(), 'user_data': user.to_dict()}), 200
 
 @app.route("/recipe/<int:recipe_id>/update", methods=['GET', 'POST'])
@@ -343,9 +384,10 @@ def add_review(recipe_id):
     current_user = User.query.get_or_404(data.get('user_id'))
     recipe = Recipe.query.get_or_404(recipe_id)
     review = Reviews(rating=data.get('rating'), reviewText = data.get('review_text'), recipe_id=recipe_id , user_id = current_user.id)
+    response = recommend.add_rating(current_user.id, recipe_id, data.get('rating'))
     db.session.add(review)
     db.session.commit()
-    return jsonify(review.to_dict()), 200
+    return jsonify(review.to_dict()), response
 
 @app.route("/recipe/<int:recipe_id>/reviews/like", methods=['POST'])
 # @login_required
@@ -430,8 +472,9 @@ def addtoCollection(recipe_id):
     if(collection.author != current_user):
         return jsonify({'message': 'You do not have access to view this link'}), 403
     collection.recipes.append(recipe)
+    response = recommend.add_bookmark(current_user.id, recipe_id)
     db.session.commit()
-    return jsonify({'message': 'Successfully added recipe!'}), 200
+    return jsonify({'message': 'Successfully added recipe!'}), response
 
 @app.route("/<username>/collections/<int:collection_id>/delete", methods=['POST'])
 # @login_required

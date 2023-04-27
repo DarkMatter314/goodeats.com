@@ -1,6 +1,5 @@
 from flask import Flask
 from flask_bcrypt import Bcrypt
-# from flask_login import LoginManager
 from flask_cors import CORS
 from goodeats.database import db
 from goodeats.models import User 
