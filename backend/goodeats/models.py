@@ -117,6 +117,7 @@ class Recipe(db.Model):
             'recipeServings' : self.recipeServings,
             'ingredientAmt' : self.ingredientAmt,
             'recipe_image': self.recipe_image,
+            'instructions': self.instructions,
             'keywords': [keyword.keyword for keyword in self.keywords],
             'ingredients': [{'name': ingredient.ingredient_name, 'amount': amount} for ingredient, amount in zip(self.ingredients, self.ingredientAmt.split(','))]
         }
@@ -139,7 +140,7 @@ class Reviews(db.Model):
     def to_dict(self):
         return {
             'review_id': self.id,
-            'datePosted': self.datePosted.isoformat(),
+            'datePosted': self.datePosted,
             'reviewText': self.reviewText,
             'reviewLikes': self.reviewLikes,
             'user_id': self.user_id
