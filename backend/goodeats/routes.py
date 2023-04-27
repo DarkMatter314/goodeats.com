@@ -468,7 +468,8 @@ def collection_recipes(username, collection_id):
         recipe_list.append(recipe.to_dict())
     return jsonify(recipe_list), 200
 
-@app.route("/recipe/<int:recipe_id>", methods=['POST'])
+#for adding
+@app.route("/recipe/collection/<int:recipe_id>/", methods=['POST'])
 # @login_required
 def addtoCollection(recipe_id):
     data = request.get_json()
