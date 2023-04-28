@@ -1,6 +1,5 @@
 from recombee_api_client.api_client import RecombeeClient
 from recombee_api_client.api_requests import *
-import random
 
 client = RecombeeClient('goodeats-dev', 'pmyeJZzC6JqbAjDZuGWp15UVH1TkcQQMiguiE7xVj1WLEByom3SQJMY79ySiMf6Z')
 
@@ -54,5 +53,5 @@ def add_rating(user_id, recipe_id, rating):
     return response
 
 def add_bookmark(user_id, recipe_id):
-    response = client.send(AddBookmark(str(user_id), str(recipe_id)))
+    response = client.send(AddBookmark(str(user_id), str(recipe_id)), cascade_create=True)
     return response
