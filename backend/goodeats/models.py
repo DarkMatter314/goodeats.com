@@ -90,7 +90,7 @@ class Recipe(db.Model):
     reviewCount = db.Column(db.Integer, nullable=True, default=0)
     avgRating = db.Column(db.Integer, nullable=True, default=0)
     recipeServings = db.Column(db.Integer, nullable=True)
-    recipe_image = db.Column(db.Text, nullable=False, default='https://w7.pngwing.com/pngs/1013/530/png-transparent-cafe-italian-cuisine-breakfast-menu-eat-food-logo-eating-thumbnail.png')
+    recipe_image = db.Column(db.Text, nullable=False, default='https://drive.google.com/file/d/1l4rd8FvQWrghtOPBSA70pjlmg9pcAHLq/view?usp=share_link')
 
     #Relationships
     reviews = db.relationship('Reviews', backref='recipe', lazy=False)
