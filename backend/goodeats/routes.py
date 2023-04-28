@@ -98,6 +98,7 @@ def register():
         hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
         user = User(username=form.username.data, name=form.name.data, email=form.email.data, password=hashed_password, image_file=form.profile_picture.data)
         db.session.add(user)
+        db.session.commit()
         favourite_collection = Collections(collectionName='Favourites', description='Your favourite recipes!', user_id=user.id)
         db.session.add(favourite_collection)
         user.favourites_id = favourite_collection.id
@@ -516,6 +517,7 @@ def get_following(username):
         if followed_user not in following:
             return jsonify({'message': 'User does not exist'}), 400
         current_user.following.remove(followed_user)
+        followed_user.follower_count = followed_user.follower_count - 1
         db.session.commit()
         return jsonify({'message': 'User successfully unfollowed!'}), 200
     elif request.method == 'GET':
@@ -537,10 +539,12 @@ def change_following(recipe_id):
         return jsonify({'message': 'You cannot follow yourself'}), 400
     elif author in current_user.following.all():
         current_user.following.remove(author)
+        author.follower_count = author.follower_count - 1
         db.session.commit()
         return jsonify({'message': f"You have successfully unfollowed {author.username}"}), 400
     else:
         current_user.following.append(author)
+        author.follower_count = author.follower_count + 1
         db.session.commit()
         return jsonify({'message': f"You are now following {author.username}"}), 200
     
@@ -555,9 +559,11 @@ def follow_user(username):
         return jsonify({'message': 'You cannot follow yourself'}), 400
     elif user in current_user.following.all():
         current_user.following.remove(user)
+        user.follower_count = user.follower_count - 1
         db.session.commit()
         return jsonify({'message': f"You have successfully unfollowed {user.username}"}), 400
     else:
         current_user.following.append(user)
+        user.follower_count = user.follower_count + 1
         db.session.commit()
         return jsonify({'message': f"You are now following {user.username}"}), 200
