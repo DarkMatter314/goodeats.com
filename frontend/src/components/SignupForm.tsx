@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 
 const SignupForm = () => {
   const router = useRouter();
+  const [imageSrc, setImageSrc] = React.useState<string>('');
   let token = '' as string | null;
   if (typeof window !== 'undefined') {
     token = localStorage.getItem('token');
@@ -24,7 +25,40 @@ const SignupForm = () => {
       }, 1500);
     }
 
+  async function handleImageChange (event: any) {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+    let fileInput = null as any;
+
+    for (const ele of form.elements) {
+      if (ele.name === 'file') {
+        fileInput = ele;
+        break;
+      }
+    }
+
+    const formData = new FormData();
+
+    for ( const file of fileInput.files ) {
+      formData.append('file', file);
+    }
+
+    formData.append('upload_preset', 'goodeats');
+
+    const data = await fetch(`https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`, {
+      method: 'POST',
+      body: formData
+    }).then(r => r.json());
+
+    setImageSrc(data.secure_url);
+  }
+
   async function submitForm(data) {
+    // set image
+    if (imageSrc) {
+      data.profile_picture = imageSrc;
+    }
     const response = await fetch('/api/register', {
       method: 'POST',
       headers: {
@@ -129,7 +163,7 @@ const SignupForm = () => {
           required />
         </Form.Control>
       </Form.Field>
-      <Form.Field className='grid mb-[15px]' name='confirm_password'>
+      <Form.Field className='grid mb-[10px]' name='confirm_password'>
         <div className='flex items-baseline justify-between'>
           <Form.Label className='text-black font-medium text-[15px] leading-[35px]'>
             Confirm Password
@@ -142,6 +176,12 @@ const SignupForm = () => {
           required />
         </Form.Control>
       </Form.Field>
+      <form className='grid mb-[15px] items-start' onChange={handleImageChange}>
+        <p className='text-black text-start font-medium text-[15px] leading-[35px]'>
+          Upload Image
+        </p>
+        <input type='file' accept='image/\*' name='file'/>
+      </form>
       <Form.Submit asChild>
         <Button className='w-full'>
           Sign Up

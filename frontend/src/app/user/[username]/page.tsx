@@ -78,6 +78,13 @@ export default function Page ({ params }: PageProps) {
               <div className='flex flex-col md:flex-col max-w-7xl lg:w-[500px] w-5/12 min-w-[360px] items-center px-8 md:px-0 gap-2 lg:gap-3 pt-6'>
                 <div className='flex flex-col justify-start w-full '>
                   <Paragraph size='sm' className='font-medium px-3 w-full text-start'>
+                    Profile picture
+                  </Paragraph>
+                  <Image src={user.profile_picture} alt={user.username} width={100} height={100} className='rounded-full' />
+                </div>
+
+                <div className='flex flex-col justify-start w-full '>
+                  <Paragraph size='sm' className='font-medium px-3 w-full text-start'>
                     Username
                   </Paragraph>
                   <input
