@@ -16,6 +16,7 @@ class User(db.Model):
     image_file = db.Column(db.Text, nullable=False, default='https://w0.peakpx.com/wallpaper/979/89/HD-wallpaper-purple-smile-design-eye-smily-profile-pic-face.jpg')
     password = db.Column(db.String(60), nullable=False)
     favourites_id = db.Column(db.Integer, nullable=True)
+    follower_count = db.Column(db.Integer, nullable=True, default=0)
 
     # Relationships
     followers = db.relationship('User', secondary=followers_table,  primaryjoin=(followers_table.c.follower_id == id), 
@@ -47,7 +48,8 @@ class User(db.Model):
             'name': self.name,
             'email': self.email,
             'profile_picture': self.image_file,
-            'favourites_id': self.favourites_id
+            'favourites_id': self.favourites_id,
+            'follower_count': self.follower_count
         }
     
 recipe_keywords = db.Table('recipe_keywords',
