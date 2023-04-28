@@ -53,5 +53,5 @@ def add_rating(user_id, recipe_id, rating):
     return response
 
 def add_bookmark(user_id, recipe_id):
-    response = client.send(AddBookmark(str(user_id), str(recipe_id)), cascade_create=True)
+    response = client.send(AddBookmark(str(user_id), str(recipe_id), cascade_create=True))
     return response
