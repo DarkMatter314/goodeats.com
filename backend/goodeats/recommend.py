@@ -4,14 +4,14 @@ from recombee_api_client.api_requests import *
 client = RecombeeClient('goodeats-dev', 'pmyeJZzC6JqbAjDZuGWp15UVH1TkcQQMiguiE7xVj1WLEByom3SQJMY79ySiMf6Z')
 
 def recipe_user(user_id):
-    recommeded_recipes = (client.send(RecommendItemsToUser(str(user_id), 10)))['recomms']
+    recommeded_recipes = (client.send(RecommendItemsToUser(str(user_id), 20)))['recomms']
     recipe_list = []
     for recipe in recommeded_recipes:
         recipe_list.append(int(recipe['id']))
     return recipe_list
 
 def user_user(user_id):
-    recommeded_users = (client.send(RecommendUsersToUser(str(user_id), 10)))['recomms']
+    recommeded_users = (client.send(RecommendUsersToUser(str(user_id), 20)))['recomms']
     user_list = []
     for recipe in recommeded_users:
         user_list.append(int(recipe['id']))
