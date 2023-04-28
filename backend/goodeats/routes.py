@@ -340,23 +340,53 @@ def search():
     keywords = request.args.get('keywords').split(',')
     page = request.args.get('page', 1, type=int)
     # Build the query to search for recipes
-    name_match = []#[Recipe.name.ilike('%{}%'.format(keyword.strip())) for keyword in keywords]
+    name_match = [Recipe.name.ilike('%{}%'.format(keyword.strip())) for keyword in keywords]
     keyword_match = [Keywords.keyword.ilike('%{}%'.format(keyword.strip())) for keyword in keywords]
-    ingredient_match =[]# [Ingredients.ingredient_name.ilike('%{}%'.format(keyword.strip())) for keyword in keywords]
-    query = Recipe.query.filter(or_(*name_match)).outerjoin(Recipe.keywords).filter(or_(*keyword_match)
-    ).outerjoin(Recipe.ingredients).filter(or_(*ingredient_match)
-    ).order_by(
-    case(
-        (Recipe.name.ilike('%{}%'.format(keywords)), 1),
-        (Keywords.keyword.ilike('%{}%'.format(keywords)), 1),
-        (Ingredients.ingredient_name.ilike('%{}%'.format(keywords)), 3),
-        else_=4
-    ))                                                                                                 
-    results = query.all()
-    
-    # Execute the query and return the results
-    
-    recipe_count = len(list(results))
+    ingredient_match = [Ingredients.ingredient_name.ilike('%{}%'.format(keyword.strip())) for keyword in keywords]
+    query = Recipe.query.join(Recipe.keywords).join(Recipe.ingredients).filter(or_(
+        and_(*name_match),
+        and_(*keyword_match),
+        and_(*ingredient_match)
+    )).order_by(
+        case(
+            (Recipe.name.ilike('%{}%'.format(keywords)), 1),
+            (Keywords.keyword.ilike('%{}%'.format(keywords)), 2),
+            (Ingredients.ingredient_name.ilike('%{}%'.format(keywords)), 3),
+            else_=4
+        )
+    )                                                                                                
+    allresults = query.all()
+    recipe_count = len(list(allresults))
+    results = query.paginate(page=page, per_page=10)
+    max_pages = (recipe_count//10) if (recipe_count%10 == 0) else (recipe_count//10 + 1)
+    recipe_data = []
+    for recipe in results:
+        recipe_data.append({'recipe': recipe.to_dict(), 'user': recipe.author.to_dict()})
+    return jsonify({'recipe_data':recipe_data, 'max_pages': max_pages})
+
+@app.route("/search_rating", methods=['GET'])
+def search_rating():
+    keywords = request.args.get('keywords').split(',')
+    page = request.args.get('page', 1, type=int)
+    # Build the query to search for recipes
+    name_match = [Recipe.name.ilike('%{}%'.format(keyword.strip())) for keyword in keywords]
+    keyword_match = [Keywords.keyword.ilike('%{}%'.format(keyword.strip())) for keyword in keywords]
+    ingredient_match = [Ingredients.ingredient_name.ilike('%{}%'.format(keyword.strip())) for keyword in keywords]
+    query = Recipe.query.join(Recipe.keywords).join(Recipe.ingredients).filter(or_(
+        and_(*name_match),
+        and_(*keyword_match),
+        and_(*ingredient_match)
+    )).order_by(
+        case(
+            (Recipe.name.ilike('%{}%'.format(keywords)), 1),
+            (Keywords.keyword.ilike('%{}%'.format(keywords)), 2),
+            (Ingredients.ingredient_name.ilike('%{}%'.format(keywords)), 3),
+            else_=4
+        ), Recipe.avgRating.desc()
+    )                                                                                                
+    allresults = query.all()
+    recipe_count = len(list(allresults))
+    results = query.paginate(page=page, per_page=10)
     max_pages = (recipe_count//10) if (recipe_count%10 == 0) else (recipe_count//10 + 1)
     recipe_data = []
     for recipe in results:
