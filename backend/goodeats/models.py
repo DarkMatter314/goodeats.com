@@ -168,7 +168,7 @@ class Collections(db.Model):
             'collection_id': self.id,
             'collection_name': self.collectionName, 
             'user_id' : self.user_id,
-            'recipes' : self.recipes,
+            'recipes' : [recipe.id for recipe in self.recipes],
             'description': self.description,
             'collection_image': self.collection_image
         }
