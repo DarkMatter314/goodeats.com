@@ -13,7 +13,7 @@ class User(db.Model):
     username = db.Column(db.String(100), unique=True, nullable=False)
     name = db.Column(db.String(100), unique=False, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
-    image_file = db.Column(db.Text, nullable=False, default='https://w0.peakpx.com/wallpaper/979/89/HD-wallpaper-purple-smile-design-eye-smily-profile-pic-face.jpg')
+    image_file = db.Column(db.Text, nullable=False, default='https://raw.githubusercontent.com/CoreyMSchafer/code_snippets/master/Python/Flask_Blog/08-Posts/flaskblog/static/profile_pics/default.jpg')
     password = db.Column(db.String(60), nullable=False)
     favourites_id = db.Column(db.Integer, nullable=True)
     follower_count = db.Column(db.Integer, nullable=True, default=0)
