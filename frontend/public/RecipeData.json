@@ -1,0 +1,60 @@
+{
+    "MyfeedRecipes": [
+    {
+      "recipeId": 1,
+      "name": "Chicken-Parmesan",
+      "ingredients": "Chicken, Parmesan, Pasta",
+      "instructions": "Cook the chicken, cook the pasta, mix it all together",
+      "username": "John Doe",
+      "rating": 4.5,
+      "imageUrl": "https://www.themealdb.com/images/media/meals/58oia61564916529.jpg",
+      "description": "A delicious chicken parmesan recipe",
+      "datepublished": "new Date(2023, 3, 1)",
+      "cooktime": "30 minutes",
+      "preptime": "10 minutes",
+      "reviewcount": "10"
+    },
+    {
+        "recipeId": 2,
+        "name": "Chicken Parmesan",
+        "ingredients": "Chicken, Parmesan, Pasta",
+        "instructions": "Cook the chicken, cook the pasta, mix it all together",
+        "username": "John Doe",
+        "rating": 4.5,
+        "imageUrl": "https://www.themealdb.com/images/media/meals/58oia61564916529.jpg",
+        "description": "A delicious chicken parmesan recipe",
+        "datepublished": "new Date(2023, 3, 1)",
+        "cooktime": "30 minutes",
+        "preptime": "10 minutes",
+        "reviewcount": "10"
+      },
+      {
+        "recipeId": 3,
+        "name": "Chicken Parmesan",
+        "ingredients": "Chicken, Parmesan, Pasta",
+        "instructions": "Cook the chicken, cook the pasta, mix it all together",
+        "username": "John Doe",
+        "rating": 4.5,
+        "imageUrl": "https://www.themealdb.com/images/media/meals/58oia61564916529.jpg",
+        "description": "A delicious chicken parmesan recipe",
+        "datepublished": "new Date(2023, 3, 1)",
+        "cooktime": "30 minutes",
+        "preptime": "10 minutes",
+        "reviewcount": "10"
+      },
+      {
+        "recipeId": 4,
+        "name": "Chicken Parmesan",
+        "ingredients": "Chicken, Parmesan, Pasta",
+        "instructions": "Cook the chicken, cook the pasta, mix it all together",
+        "username": "John Doe",
+        "rating": 4.5,
+        "imageUrl": "https://www.themealdb.com/images/media/meals/58oia61564916529.jpg",
+        "description": "A delicious chicken parmesan recipe",
+        "datepublished": "new Date(2023, 3, 1)",
+        "cooktime": "30 minutes",
+        "preptime": "10 minutes",
+        "reviewcount": "10"
+      }
+  ]
+}

@@ -1,16 +1,12 @@
-import * as React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { buttonVariants, IconButton } from '@/ui/Button'
 import { RecipesMenu } from '@/components/RecipesMenu'
 import { Icons } from '@/components/Icons'
 import MobileMenu from '@/components/MobileMenu'
-import { cn } from '@/lib/utils'
-import LoggedInMenu from '@/components/LoggedInMenu'
+import UserActions from '@/components/UserActions'
 
 const Navbar = () => {
-  const session = false
-
   return (
     <div className='fixed backdrop-blur-sm bg-orange-400/75 z-50 top-0 left-0 right-0 h-20 border-b border-slate-300 shadow-sm flex'>
       <div className='container max-w-full w-full flex justify-between items-center mx-2 md:mx-5'>
@@ -19,7 +15,7 @@ const Navbar = () => {
         </Link>
 
         <div className='md:hidden gap-4'>
-          <MobileMenu />
+          <MobileMenu secret={process.env.JWT_SECRET as string} />
         </div>
 
         <div className='hidden md:flex gap-5 md:gap-4'>
@@ -30,24 +26,7 @@ const Navbar = () => {
 
           <RecipesMenu />
 
-          {session ? (
-            <>
-              <LoggedInMenu />
-            </>
-            ): (
-            <>
-          <Link
-            href='/login'
-            className={buttonVariants({ variant: 'link' })}>
-            Login
-          </Link>
-
-          <Link
-            href='/signup'
-            className={cn(buttonVariants({ variant: 'outline' }), 'text-black border-black hover:text-slate-600 hover:border-slate-600')}>
-            Sign up
-          </Link>
-            </>)}
+          <UserActions secret={process.env.JWT_SECRET as string} />
 
         </div>
       </div>

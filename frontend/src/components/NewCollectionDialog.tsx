@@ -4,11 +4,36 @@ import * as Form from '@radix-ui/react-form';
 import * as Dialog from '@radix-ui/react-dialog';
 import { Button } from '@/ui/Button';
 import Icons from '@/components/Icons';
-import { IconButton } from '@/components/ui/Button';
+import { IconButton } from '@/ui/Button';
 
-const NewCollectionDialog = () => {
+import React from 'react';
+
+import { useRouter } from 'next/router'
+
+//...
+
+
+const NewCollectionDialog = ({username, user_id}:{username:string, user_id:number}) => {
+  const [open, setOpen] = React.useState(false);
+
+  async function submitForm(data) {
+    data.user_id = user_id;
+    const response = await fetch(`/api/${username}/collections`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    const json = await response.json();
+    setOpen(false);
+
+    //then we gotta automatically close the dialog box
+  }
+
+
   return (
-  <Dialog.Root>
+  <Dialog.Root open={open} onOpenChange={setOpen}>
     <Dialog.Trigger asChild>
       <IconButton icon={Icons.Plus} variant='ghost' size='lg' />
     </Dialog.Trigger>
@@ -26,8 +51,13 @@ const NewCollectionDialog = () => {
         <Dialog.Description className='text-[15px] text-black mb-[15px]'>
           Create a new collection to organize your recipes.
         </Dialog.Description>
-        <Form.Root className='w-full flex flex-col items-start justify-start'>
-          <Form.Field className='w-full grid mb-[10px]' name='collectionName'>
+        <Form.Root className='w-full flex flex-col items-start justify-start' onSubmit={(event) => {
+        const data = Object.fromEntries(new FormData(event.currentTarget));
+        submitForm(data);
+        event.preventDefault();
+
+       }}>
+          <Form.Field className='w-full grid mb-[10px]' name='name'>
             <div className='flex items-baseline justify-between'>
               <Form.Label className='text-black font-medium text-[15px]'>
                 Collection Name
@@ -51,11 +81,14 @@ const NewCollectionDialog = () => {
             </Form.Control>
           </Form.Field>
           <div className='flex flex-row w-full justify-end'>
+
             <Form.Submit asChild>
               <Button className='w-full md:w-2/5'>
                 Add
+
               </Button>
             </Form.Submit>
+
           </div>
         </Form.Root>
       </Dialog.Content>

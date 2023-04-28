@@ -3,15 +3,22 @@ const nextConfig = {
   experimental: {
     appDir: true,
   },
-  // output: 'export',
+  trailingSlash: true,
   images: {
     remotePatterns: [
       {
-        protocol: "https",
-        hostname: "www.themealdb.com",
-        pathname: "/**",
-      },
+        protocol: 'https',
+        hostname: '*',
+      }
     ],
+  },
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${process.env.BASE_API_URL}/:path*`,
+      },
+    ]
   },
 }
 

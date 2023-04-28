@@ -11,6 +11,7 @@ const ParagraphVariants = cva(
       size: {
         default: 'text-base sm:text-lg',
         sm: 'text-sm, sm:text-base',
+        xs: 'text-xs sm:text-sm',
       },
     },
     defaultVariants: {

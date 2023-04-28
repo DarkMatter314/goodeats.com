@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 const page: React.FC = () => {
   return (
-    <div className='absolute inset-0 mx-auto container flex h-screen flex-row items-center'>
+    <div className='absolute pt-32 inset-0 mx-auto container flex h-screen flex-row items-center'>
       <div className='hidden lg:flex max-w-7xl w-1/2 h-full px-10'>
         <Image src='/food-1.jpg' alt='' width={1000} height={1000} className='w-full h-full object-contain' />
       </div>

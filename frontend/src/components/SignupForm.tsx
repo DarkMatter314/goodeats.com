@@ -3,18 +3,29 @@
 import * as Form from '@radix-ui/react-form';
 import { Button } from '@/ui/Button';
 import * as React from 'react';
-
-interface FormData {
-  name: string;
-  username: string;
-  email: string;
-  password: string;
-  confirm_password: string;
-}
+import { toast } from '@/ui/toast';
+import { useRouter } from 'next/navigation';
 
 const SignupForm = () => {
+  const router = useRouter();
+  let token = '' as string | null;
+  if (typeof window !== 'undefined') {
+    token = localStorage.getItem('token');
+  }
+    if (token) {
+      toast({
+        title: 'Already logged in',
+        message: '',
+        type: 'success',
+        duration: 2000,
+      });
+      setTimeout(() => {
+        router.push('/');
+      }, 1500);
+    }
+
   async function submitForm(data) {
-    const response = await fetch('http://127.0.0.1:5000/register', {
+    const response = await fetch('/api/register', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -22,16 +33,27 @@ const SignupForm = () => {
       body: JSON.stringify(data),
     });
     const json = await response.json();
-    console.log(response);
-    console.log(json);
-    if (response.ok) {
-      console.log('success');
-    } else {
+    if (json.username || json.email || json.password || json.confirm_password) {
       let error_msg = "";
-      error_msg = json.email || "";
-      error_msg += json.username || "";
-      error_msg += json.password || "";
-      alert(error_msg);
+      error_msg = json.email || json.username || (json.password && `Password ${json.password}`) || (json.confirm_password && `Confirm Password ${json.confirm_password}`) || "";
+      toast({
+        title: 'Error',
+        message: error_msg,
+        type: 'error',
+        duration: 2000,
+      });
+    } else {
+      toast({
+        title: 'Successfully registered',
+        message: '',
+        type: 'success',
+        duration: 1000,
+      })
+      const token = json.token;
+      localStorage.setItem('token', token);
+      setTimeout(() => {
+        router.push('/');
+      }, 1500);
     }
   }
 
@@ -94,7 +116,7 @@ const SignupForm = () => {
           required />
         </Form.Control>
       </Form.Field>
-      <Form.Field className='grid mb-[15px]' name='password'>
+      <Form.Field className='grid mb-[10px]' name='password'>
         <div className='flex items-baseline justify-between'>
           <Form.Label className='text-black font-medium text-[15px] leading-[35px]'>
             Password

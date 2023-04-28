@@ -19,7 +19,7 @@ const About = ({children,Name,Role,ImagePath,Description,imageSize, GithubIds}:A
               <span><Image src={`${ImagePath}`} alt='Person' width={400} height={400} className={`h-${imageSize} object-cover`} />
               <h3 className='text-black text-center text-xl font-medium'>{Name}</h3>
               <p className='flex text-black text-center text-sm font-medium flex-wrap justify-center'> <strong>{Role}</strong> <br/> {Description} <br/>
-              <Link className='font-light underline underline-offset-2 hover:underline-offset-1 hover:font-medium text-slate-600' href={'https://Github.com/'.concat(GithubIds.toString())}> {GithubIds}</Link>
+              <Link className='font-medium underline hover:underline-offset-1 underline-offset-2 text-slate-600' href={'https://Github.com/'.concat(GithubIds.toString())}> {GithubIds}</Link>
               </p>
               </span>
               {children}

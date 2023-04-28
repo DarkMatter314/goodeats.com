@@ -35,11 +35,11 @@ const page: React.FC = () => {
             <div className='flex flex-row md:flex-row justify-center items-start gap-4 md:gap-20 pb-8'>
 
               <About Name='Garv Nagori' Role='Flask video watcher'
-                ImagePath='/Rishabh.png' imageSize={imageSize} Description='Learnt Flask from youtube'
+                ImagePath='/wojak.png' imageSize={imageSize} Description='Learnt Flask from youtube'
                 GithubIds='DarkMatter314' />
 
               <About Name='Naman Agarwal' Role='ER diagram expert'
-                ImagePath='/Rishabh.png' imageSize={imageSize} Description='made ER diagrams and (possibly?) did MySQL'
+                ImagePath='/wojak.png' imageSize={imageSize} Description='made ER diagrams and did MySQL because he&apos;s good at relationships'
                 GithubIds='Naman0411' />
 
             </div>

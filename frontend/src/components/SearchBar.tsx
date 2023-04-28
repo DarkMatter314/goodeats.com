@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Icons from '@/components/Icons';
 import { useRouter } from 'next/navigation';
-import { Button } from './ui/Button';
+import { Button } from '@/ui/Button';
 
 export default function SearchBar() {
   const router = useRouter();

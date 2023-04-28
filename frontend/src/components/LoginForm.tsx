@@ -3,13 +3,20 @@
 import * as Form from '@radix-ui/react-form';
 import { Button } from '@/ui/Button';
 import { useRouter } from 'next/navigation';
+import { toast } from '@/ui/toast';
+
 
 const LoginForm = () => {
 
-  const router = useRouter()
+  const router = useRouter();
 
   async function submitForm(data) {
-    const response = await fetch('http://127.0.0.1:5000/login', {
+    if (data.remember == 'on') {
+      data.remember = true;
+    } else {
+      data.remember = false;
+    }
+    const response = await fetch('/api/login', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -17,11 +24,30 @@ const LoginForm = () => {
       body: JSON.stringify(data),
     });
     const json = await response.json();
-    alert(json.message)
-    if (response.ok) {
-      router.push('/');
+    if (json.token) {
+      toast({
+        title: 'Success',
+        message: 'You are now logged in',
+        type: 'success',
+        duration: 1500,
+      })
+      const token = json.token;
+      localStorage.setItem('token', token);
+      setTimeout(() => {
+        router.push('/');
+      }, 1000);
     }
-  }
+    else {
+      const error_msg = json.message || json.password || json.username;
+      toast({
+        title: 'Error',
+        message: error_msg,
+        type: 'error',
+        duration: 1000,
+      });
+    }
+  };
+
   return (
     <Form.Root className='w-[360px] items-center px-8 md:px-0 pb-8'
       onSubmit={(event) => {
@@ -46,7 +72,7 @@ const LoginForm = () => {
           required />
         </Form.Control>
       </Form.Field>
-      <Form.Field className='grid mb-[15px]' name='password'>
+      <Form.Field className='grid mb-[10px]' name='password'>
         <div className='flex items-baseline justify-between'>
           <Form.Label className='text-black font-medium text-[15px] leading-[35px]'>
             Password
@@ -58,6 +84,18 @@ const LoginForm = () => {
           type='password'
           required />
         </Form.Control>
+      </Form.Field>
+      <Form.Field className='flex flex-row items-center gap-2 justify-start mb-[15px]' name='remember'>
+        <Form.Control asChild>
+          <input
+          className='bg-gray-200 hover:bg-gray-300 cursor-pointer w-4 h-4 focus:outline-none rounded-lg'
+          type='checkbox' />
+        </Form.Control>
+        <div className='flex items-baseline justify-between'>
+          <Form.Label className='text-black font-medium text-[15px] leading-[35px]'>
+            Remember Me
+          </Form.Label>
+        </div>
       </Form.Field>
       <Form.Submit asChild>
         <Button className='w-full'>
