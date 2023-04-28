@@ -67,7 +67,8 @@ def recommend_recipes():
     recipe_ids = recommend.recipe_user(user_id)
     recipe_list = []
     for id in recipe_ids:
-        recipe = Recipe.query.get_or_404(id)
+        recipe = Recipe.query.get(id)
+        if(recipe is None): continue
         recipe_list.append({'recipe': recipe.to_dict(), 'user': recipe.author.to_dict()})
     return jsonify({'recipe_data':recipe_list}), 200
 
