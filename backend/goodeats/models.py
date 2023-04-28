@@ -15,7 +15,7 @@ class User(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     image_file = db.Column(db.Text, nullable=False, default='https://w0.peakpx.com/wallpaper/979/89/HD-wallpaper-purple-smile-design-eye-smily-profile-pic-face.jpg')
     password = db.Column(db.String(60), nullable=False)
-    favourites_id = db.Column(db.Ineger, nullable=True)
+    favourites_id = db.Column(db.Integer, nullable=True)
 
     # Relationships
     followers = db.relationship('User', secondary=followers_table,  primaryjoin=(followers_table.c.follower_id == id), 
