@@ -3,7 +3,7 @@ from goodeats.database import db
 # from flask_login import UserMixin
 import random
 
-followers_table = db.Table('Followers',
+follower_table = db.Table('follower_table',
     db.Column('follower_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
     db.Column('following_id', db.Integer, db.ForeignKey('user.id'), primary_key=True)
 )
@@ -19,12 +19,12 @@ class User(db.Model):
     follower_count = db.Column(db.Integer, nullable=True, default=0)
 
     # Relationships
-    followers = db.relationship('User', secondary=followers_table,  primaryjoin=(followers_table.c.follower_id == id), 
-                                secondaryjoin=(followers_table.c.following_id == id),
+    followers = db.relationship('User', secondary=follower_table,  primaryjoin=(follower_table.c.follower_id == id), 
+                                secondaryjoin=(follower_table.c.following_id == id),
                                 # backref=db.backref('following', lazy='dynamic'), 
                                 lazy='dynamic')
-    following = db.relationship('User', secondary=followers_table,  primaryjoin=(followers_table.c.following_id == id), 
-                                secondaryjoin=(followers_table.c.follower_id == id),
+    following = db.relationship('User', secondary=follower_table,  primaryjoin=(follower_table.c.following_id == id), 
+                                secondaryjoin=(follower_table.c.follower_id == id),
                                 # backref=db.backref('follower', lazy='dynamic'), 
                                 lazy='dynamic')
     recipes = db.relationship('Recipe', backref='author', lazy=True)
