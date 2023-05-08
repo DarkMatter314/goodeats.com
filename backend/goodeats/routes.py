@@ -168,6 +168,8 @@ def update_profile(username):
 # @login_required
 def deleteUser(username):
     data = request.get_json()
+    user_id = data.get('user_id')
+    if(user_id is None): return jsonify({'message': 'Error'}), 400
     current_user = User.query.get_or_404(data.get('user_id'))
     user = User.query.filter_by(username=username).first_or_404()
     if(current_user != user):
@@ -355,7 +357,7 @@ def search():
             (Ingredients.ingredient_name.ilike('%{}%'.format(keywords)), 3),
             else_=4
         )
-    )                                                                                                
+    ).distinct()                                                                                     
     allresults = query.all()
     recipe_count = len(list(allresults))
     results = query.paginate(page=page, per_page=10)
@@ -373,7 +375,7 @@ def search_rating():
     name_match = [Recipe.name.ilike('%{}%'.format(keyword.strip())) for keyword in keywords]
     keyword_match = [Keywords.keyword.ilike('%{}%'.format(keyword.strip())) for keyword in keywords]
     ingredient_match = [Ingredients.ingredient_name.ilike('%{}%'.format(keyword.strip())) for keyword in keywords]
-    query = Recipe.query.join(Recipe.keywords).join(Recipe.ingredients).filter(or_(
+    query = db.session.query(Recipe.id).join(Recipe.keywords).join(Recipe.ingredients).filter(or_(
         and_(*name_match),
         and_(*keyword_match),
         and_(*ingredient_match)
@@ -384,14 +386,14 @@ def search_rating():
             (Ingredients.ingredient_name.ilike('%{}%'.format(keywords)), 3),
             else_=4
         ), Recipe.avgRating.desc()
-    )                                                                                                
-    allresults = query.all()
-    recipe_count = len(list(allresults))
-    results = query.paginate(page=page, per_page=10)
+    ).distinct()                                                                                            
+    recipe_count = query.count()
+    results = [id[0] for id in query.limit(page*10).offset((page-1)*10).all()]
     max_pages = (recipe_count//10) if (recipe_count%10 == 0) else (recipe_count//10 + 1)
     recipe_data = []
-    for recipe in results:
-        recipe_data.append({'recipe': recipe.to_dict(), 'user': recipe.author.to_dict()})
+    for recipe_id in results:
+        recipe = Recipe.query.get(recipe_id)
+        if recipe is not None: recipe_data.append({'recipe': recipe.to_dict(), 'user': recipe.author.to_dict()})
     return jsonify({'recipe_data':recipe_data, 'max_pages': max_pages})
 
 @app.route("/recipe/<int:recipe_id>/reviews", methods=['GET', 'POST'])
@@ -529,6 +531,8 @@ def delete_collection(username, collection_id):
     collection = Collections.query.get_or_404(collection_id)
     if collection.author != current_user:
         return jsonify({'message': 'You do not have access to view this link'}), 403
+    if collection.id == user.favourites_id:
+        return jsonify({'message': 'You cannot delete your favourites collection'}), 403
     db.session.delete(collection)
     db.session.commit()
     return jsonify({'message': 'Collection deleted successfully.'}), 200
